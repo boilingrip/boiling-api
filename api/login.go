@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"time"
 
 	"github.com/kataras/iris"
 )
@@ -29,6 +30,12 @@ func (a *API) postLogin(ctx *context) {
 		return
 	}
 	u.PasswordHash = "" // just to be sure
+
+	err = a.db.UpdateUserSetLastLogin(u.ID, time.Now())
+	if err != nil {
+		ctx.Error(err, iris.StatusInternalServerError)
+		return
+	}
 
 	tok, err := a.db.InsertTokenForUser(*u)
 	if err != nil {

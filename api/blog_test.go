@@ -92,8 +92,15 @@ func TestInsertUpdateDeleteBlog(t *testing.T) {
 		Expect().Status(200)
 
 	obj = resp.JSON().Object()
-	obj.Keys().ContainsOnly("status")
+	obj.Keys().ContainsOnly("status", "data")
 	obj.ValueEqual("status", "success")
+	post := obj.Value("data").Object().Value("entry").Object()
+
+	post.Keys().ContainsOnly("id", "title", "content", "tags", "author", "posted_at")
+	post.ValueEqual("id", id)
+	post.ValueEqual("title", entry.Title)
+	post.ValueEqual("content", entry.Content)
+	post.ValueEqual("tags", entry.Tags)
 
 	// Check update
 	resp = e.GET("/blogs").
@@ -106,7 +113,7 @@ func TestInsertUpdateDeleteBlog(t *testing.T) {
 	obj.Keys().ContainsOnly("status", "data")
 	obj.ValueEqual("status", "success")
 	obj.Value("data").Object().Value("entries").Array().Length().Equal(1)
-	post := obj.Value("data").Object().Value("entries").Array().Element(0).Object()
+	post = obj.Value("data").Object().Value("entries").Array().Element(0).Object()
 
 	post.Keys().ContainsOnly("id", "title", "content", "tags", "author", "posted_at")
 	post.ValueEqual("id", id)

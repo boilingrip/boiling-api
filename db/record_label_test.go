@@ -48,7 +48,7 @@ func TestInsertGetRecordLabel(t *testing.T) {
 	require.Equal(t, l2.Description.String, l2r.Description.String)
 }
 
-func TestAutocompleteRecordLabel(t *testing.T) {
+func TestAutocompleteRecordLabels(t *testing.T) {
 	db, err := cleanDB()
 	require.Nil(t, err)
 
@@ -70,12 +70,12 @@ func TestAutocompleteRecordLabel(t *testing.T) {
 	err = db.InsertRecordLabel(&l2)
 	require.Nil(t, err)
 
-	labels, err := db.AutocompleteRecordLabel("such")
+	labels, err := db.AutocompleteRecordLabels("such")
 	require.Nil(t, err)
 	require.Equal(t, 1, len(labels))
 	require.Equal(t, l1.Name, labels[0].Name)
 
-	labels, err = db.AutocompleteRecordLabel("u")
+	labels, err = db.AutocompleteRecordLabels("u")
 	require.Nil(t, err)
 	require.Equal(t, 2, len(labels))
 }

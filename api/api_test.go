@@ -113,7 +113,6 @@ type dbWithLogin struct {
 }
 
 func cleanDBWithLogin() (*dbWithLogin, error) {
-
 	d, err := cleanDB()
 	if err != nil {
 		return nil, err
@@ -133,6 +132,8 @@ func cleanDBWithLogin() (*dbWithLogin, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	err = d.UpdateUserAddPrivileges(u.ID,[]int{0,1,2,3,4,5})
 
 	toReturn := &dbWithLogin{
 		db:       d,

@@ -18,7 +18,7 @@ type RecordLabel struct {
 	AddedBy     User
 }
 
-func (db *DB) AutocompleteRecordLabel(s string) ([]RecordLabel, error) {
+func (db *DB) AutocompleteRecordLabels(s string) ([]RecordLabel, error) {
 	if len(s) == 0 {
 		return nil, errors.New("misssing s")
 	}

@@ -1,7 +1,7 @@
 package db
 
-func (db *DB) GetAllMedia() (map[int]string, error) {
-	rows, err := db.db.Query("SELECT id,medium FROM media")
+func (db *DB) GetAllPrivileges() (map[int]string, error) {
+	rows, err := db.db.Query("SELECT id,privilege FROM privileges")
 	if err != nil {
 		return nil, err
 	}
@@ -17,7 +17,6 @@ func (db *DB) GetAllMedia() (map[int]string, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		m[tmpI] = tmpS
 	}
 

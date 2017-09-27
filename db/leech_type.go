@@ -1,7 +1,7 @@
 package db
 
-func (db *DB) GetAllMedia() (map[int]string, error) {
-	rows, err := db.db.Query("SELECT id,medium FROM media")
+func (db *DB) GetAllLeechTypes() (map[int]string, error) {
+	rows, err := db.db.Query("SELECT id,type FROM leech_types")
 	if err != nil {
 		return nil, err
 	}

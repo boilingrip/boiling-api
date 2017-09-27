@@ -7,10 +7,10 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sed malesuada 
 Mauris ac interdum orci. Quisque sed metus libero. Donec at venenatis risus, a tempor lorem. Nulla quis eros urna. Fusce eu lectus nunc. Integer vitae tempor metus, vitae feugiat ex. Suspendisse a libero ultricies, vestibulum neque et, facilisis dui. Mauris sit amet neque dapibus, hendrerit urna at, vestibulum velit. Donec euismod iaculis ante, et scelerisque elit sollicitudin eget. Morbi nec dui ut urna elementum consectetur in sed nunc. Praesent volutpat neque fermentum metus accumsan iaculis. Nullam nec sodales felis, nec auctor purus. Vivamus dui magna, cursus in mauris sed, fringilla tempor risus.',
    1, '2000-01-02 00:00');
 
-INSERT INTO artists(id,name,bio) VALUES
-  (1,'Led Zeppelin','Some American Band'),
-  (2,'deadmau5','Some Canadian producer of electronic music'),
-  (3,'No Mana','Some electronic dude');
+INSERT INTO artists (id, name, bio, added, added_by) VALUES
+  (1, 'Led Zeppelin', 'Some American Band', now(), 1),
+  (2, 'deadmau5', 'Some Canadian producer of electronic music', now(), 1),
+  (3, 'No Mana', 'Some electronic dude', now(), 1);
 
 INSERT INTO artist_tags (id, tag) VALUES
   (1, 'rock'),
@@ -37,18 +37,21 @@ INSERT INTO artist_tags_artists (artist, tag) VALUES
   (3, 8),
   (3, 9);
 
-INSERT INTO artist_aliases (artist, alias) VALUES (2,'testpilot');
+INSERT INTO artist_aliases (artist, alias, added, added_by)
+VALUES (2, 'testpilot', now(), 1);
 
 INSERT INTO release_group_tags (id, tag) VALUES
-  (1,'edm'),
-  (2,'techno'),
-  (3,'electronic');
+  (1, 'edm'),
+  (2, 'techno'),
+  (3, 'electronic');
 
-INSERT INTO release_groups (id, name, type, release_date) VALUES (1,'4x4=12',0,'2010-12-03');
+INSERT INTO release_groups (id, name, type, release_date, added, added_by)
+VALUES (1, '4x4=12', 0, '2010-12-03', now(), 1);
 
-INSERT INTO release_group_tags_release_groups(release_group, tag) VALUES
-  (1,1),
-  (1,2),
-  (1,3);
+INSERT INTO release_group_tags_release_groups (release_group, tag) VALUES
+  (1, 1),
+  (1, 2),
+  (1, 3);
 
-INSERT INTO release_groups_artists (release_group, artist, role) VALUES (1,2,0);
+INSERT INTO release_groups_artists (release_group, artist, role)
+VALUES (1, 2, 0);

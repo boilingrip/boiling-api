@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/kataras/iris"
-	"github.com/microcosm-cc/bluemonday"
 )
 
 func (a *API) postSignup(ctx *context) {
@@ -24,17 +23,17 @@ func (a *API) postSignup(ctx *context) {
 		ctx.Fail(errors.New("missing email"), iris.StatusBadRequest)
 		return
 	}
-	if !strings.Contains(email, "@") {
+	if !strings.Contains(email, "@") || sanitizeString(email) != email {
 		ctx.Fail(errors.New("invalid email"), iris.StatusBadRequest)
 		return
 	}
-
-	if bluemonday.StrictPolicy().Sanitize(username) != username {
+	if sanitizeString(username) != username {
 		ctx.Fail(errors.New("invalid username"), iris.StatusBadRequest)
 		return
 	}
-	if bluemonday.StrictPolicy().Sanitize(email) != email {
-		ctx.Fail(errors.New("invalid email"), iris.StatusBadRequest)
+	if strings.TrimSpace(password) != password {
+		ctx.Fail(errors.New("invalid password"), iris.StatusBadRequest)
+		return
 	}
 
 	err := a.db.SignUpUser(username, password, email)

@@ -1,7 +1,7 @@
 package db
 
-func (db *DB) GetAllMedia() (map[int]string, error) {
-	rows, err := db.db.Query("SELECT id,medium FROM media")
+func (db *DB) GetAllReleaseGroupRoles() (map[int]string, error) {
+	rows, err := db.db.Query("SELECT id,role FROM release_roles")
 	if err != nil {
 		return nil, err
 	}

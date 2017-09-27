@@ -184,6 +184,52 @@ func (db *DB) UpdateBlogEntry(post BlogEntry) error {
 	return tx.Commit()
 }
 
+func (db *DB) populateBlogTags(entry *BlogEntry) error {
+	inner, err := db.db.Query("SELECT t.tag FROM blog_tags t, blog_tags_blogs b WHERE b.blog = $1 AND b.tag = t.id", entry.ID)
+	if err != nil {
+		return err
+	}
+	defer inner.Close()
+
+	for inner.Next() {
+		var tag string
+		err = inner.Scan(&tag)
+		if err != nil {
+			return err
+		}
+		entry.Tags = append(entry.Tags, tag)
+	}
+
+	return nil
+}
+
+func (db *DB) GetBlogEntry(id int) (*BlogEntry, error) {
+	if id < 0 {
+		return nil, errors.New("invalid ID")
+	}
+
+	row := db.db.QueryRow("SELECT b.id,b.author,u.username,b.title,b.content,b.posted_at FROM blogs b,users u WHERE b.author = u.id AND b.id = $1", id)
+	var entry BlogEntry
+	err := row.Scan(
+		&entry.ID,
+		&entry.Author.ID,
+		&entry.Author.Username,
+		&entry.Title,
+		&entry.Content,
+		&entry.PostedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.populateBlogTags(&entry)
+	if err != nil {
+		return nil, err
+	}
+
+	return &entry, nil
+}
+
 func (db *DB) GetBlogEntries(limit, offset int) ([]BlogEntry, error) {
 	if limit < 1 {
 		return nil, errors.New("invalid limit")
@@ -213,19 +259,9 @@ func (db *DB) GetBlogEntries(limit, offset int) ([]BlogEntry, error) {
 			return nil, err
 		}
 
-		inner, err := db.db.Query("SELECT t.tag FROM blog_tags t, blog_tags_blogs b WHERE b.blog = $1 AND b.tag = t.id", entry.ID)
+		err = db.populateBlogTags(&entry)
 		if err != nil {
 			return nil, err
-		}
-		defer inner.Close()
-
-		for inner.Next() {
-			var tag string
-			err = inner.Scan(&tag)
-			if err != nil {
-				return nil, err
-			}
-			entry.Tags = append(entry.Tags, tag)
 		}
 
 		result = append(result, entry)

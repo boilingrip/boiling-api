@@ -1,11 +1,11 @@
 package db
 
-func (db *DB) GetAllMedia() (map[int]string, error) {
-	rows, err := db.db.Query("SELECT id,medium FROM media")
+
+func (db *DB) GetAllReleaseGroupTypes() (map[int]string, error) {
+	rows, err := db.db.Query("SELECT id,type FROM release_group_types")
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	m := make(map[int]string)
 	for rows.Next() {
@@ -17,7 +17,9 @@ func (db *DB) GetAllMedia() (map[int]string, error) {
 		if err != nil {
 			return nil, err
 		}
-
+		if _, ok := m[tmpI]; ok {
+			panic("duplicate key for release group types?")
+		}
 		m[tmpI] = tmpS
 	}
 

@@ -3,13 +3,12 @@ package db
 import "time"
 
 type Torrent struct {
-	ID       int
-	Uploader User
-	Uploaded time.Time
-	InfoHash [20]byte
+	ID         int
+	Uploaded   time.Time
+	UploadedBy User
+	InfoHash   [20]byte
 
-	Format      string
-	Encoding    string // Lossy/Lossless
+	Format      int
 	Size        int64
 	Description string
 
@@ -19,7 +18,7 @@ type Torrent struct {
 
 	FileList []string
 
-	Properties map[string]interface{}
+	Properties map[string]string
 	LeechType  string
 }
 
@@ -31,6 +30,6 @@ func (db *DB) GetTorrent(id int) (*Torrent, error) {
 	return &Torrent{}, nil
 }
 
-func (db *DB) RemoveTorrent(id int) error {
+func (db *DB) DeleteTorrent(id int) error {
 	return nil
 }

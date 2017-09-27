@@ -33,31 +33,22 @@ func TestInsertGetDeleteBlogEntry(t *testing.T) {
 	require.Equal(t, original.Tags, e.Tags)
 
 	// test get post
-	p, err := db.GetBlogEntries(100, 0)
+	p, err := db.GetBlogEntry(e.ID)
 	require.Nil(t, err)
-	require.Equal(t, 1, len(p))
-
-	// check ID was set correctly
-	require.Equal(t, p[0].ID, e.ID)
-
-	// check nothing has changed
-	e = p[0]
-	require.Equal(t, original.Author.ID, e.Author.ID)
-	require.Equal(t, original.Title, e.Title)
-	require.Equal(t, original.PostedAt, e.PostedAt)
-	require.Equal(t, original.Content, e.Content)
-	require.Equal(t, original.Tags, e.Tags)
-
-	// check author username
-	require.NotEmpty(t, e.Author.Username)
+	require.Equal(t, original.Author.ID, p.Author.ID)
+	require.Equal(t, original.Title, p.Title)
+	require.Equal(t, original.PostedAt, p.PostedAt)
+	require.Equal(t, original.Content, p.Content)
+	require.Equal(t, original.Tags, p.Tags)
+	require.NotEmpty(t, p.Author.Username)
 
 	// test delete
 	err = db.DeleteBlogEntry(e.ID)
 	require.Nil(t, err)
 
-	p, err = db.GetBlogEntries(100, 0)
+	entries, err := db.GetBlogEntries(100, 0)
 	require.Nil(t, err)
-	require.Equal(t, 0, len(p))
+	require.Equal(t, 0, len(entries))
 }
 
 func TestGetBlogEntriesOrdering(t *testing.T) {

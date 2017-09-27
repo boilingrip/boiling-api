@@ -15,13 +15,15 @@ type User struct {
 	Username     string
 	Email        string
 	PasswordHash string
+	Bio          sql.NullString
 	Enabled      bool
 	CanLogin     bool
-	JoinDate     time.Time
+	JoinedAt     time.Time
 	LastLogin    pq.NullTime
 	LastAccess   pq.NullTime
 	Uploaded     int64
 	Downloaded   int64
+	Privileges   []int
 }
 
 func (db *DB) UpdateUserSetLastLogin(id int, lastLogin time.Time) error {
@@ -64,6 +66,45 @@ func (db *DB) UpdateUserSetLastAccess(id int, lastAccess time.Time) error {
 	return nil
 }
 
+func updateUserAddPrivilegesTx(id int, privileges []int, tx *sql.Tx) error {
+	for _, p := range privileges {
+		res, err := tx.Exec("INSERT INTO users_privileges(uid,privilege) VALUES($1,$2) ON CONFLICT (uid,privilege) DO UPDATE SET privilege=$2", id, p)
+		if err != nil {
+			return err
+		}
+
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if affected != 1 {
+			return errors.New("user not found? duplicate privilege?")
+		}
+	}
+
+	return nil
+}
+
+func (db *DB) UpdateUserAddPrivileges(id int, privileges []int) error {
+	if id < 0 {
+		return errors.New("invalid ID")
+	}
+
+	tx, err := db.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	err = updateUserAddPrivilegesTx(id, privileges, tx)
+	if err != nil {
+		log.Warnln("Rolling back transaction due to error", log.Fields{"err": err})
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func (db *DB) UpdateUserDeltaUpDown(id, deltaUp, deltaDown int) error {
 	if id < 0 {
 		return errors.New("invalid id")
@@ -98,7 +139,7 @@ func (db *DB) SignUpUser(username, password, email string) error {
 		return err
 	}
 
-	res, err := db.db.Exec("INSERT INTO users(username, email, password, enabled, can_login, join_date) VALUES ($1,$2,$3,TRUE,TRUE,NOW())", username, email, pwHash)
+	res, err := db.db.Exec("INSERT INTO users(username, email, password, enabled, can_login, joined_at) VALUES ($1,$2,$3,TRUE,TRUE,NOW())", username, email, pwHash)
 	if err != nil {
 		return err
 	}
@@ -113,21 +154,46 @@ func (db *DB) SignUpUser(username, password, email string) error {
 	return nil
 }
 
+func (db *DB) PopulateUserPrivileges(u *User) error {
+	if u.ID < 0 {
+		return errors.New("invalid ID")
+	}
+
+	rows, err := db.db.Query("SELECT privilege FROM users_privileges WHERE uid =$1 ORDER BY privilege ASC", u.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var tmp int
+		err = rows.Scan(&tmp)
+		if err != nil {
+			return err
+		}
+
+		u.Privileges = append(u.Privileges, tmp)
+	}
+
+	return nil
+}
+
 func (db *DB) GetUser(id int) (*User, error) {
 	if id < 0 {
 		return nil, errors.New("invalid ID")
 	}
 
-	row := db.db.QueryRow("SELECT email,username,password,enabled,can_login,join_date,last_login,last_access,uploaded,downloaded FROM users WHERE id=$1", id)
+	row := db.db.QueryRow("SELECT email,username,password,bio,enabled,can_login,joined_at,last_login,last_access,uploaded,downloaded FROM users WHERE id=$1", id)
 
 	user := User{ID: id}
 	err := row.Scan(
 		&user.Email,
 		&user.Username,
 		&user.PasswordHash,
+		&user.Bio,
 		&user.Enabled,
 		&user.CanLogin,
-		&user.JoinDate,
+		&user.JoinedAt,
 		&user.LastLogin,
 		&user.LastAccess,
 		&user.Uploaded,
@@ -153,16 +219,17 @@ func (db *DB) LoginAndGetUser(username, password string) (*User, error) {
 		return nil, errors.New("missing username/password")
 	}
 
-	row := db.db.QueryRow("SELECT id,email,password,enabled,can_login,join_date,last_access,last_login,uploaded,downloaded FROM users WHERE username = $1", username)
+	row := db.db.QueryRow("SELECT id,email,password,bio,enabled,can_login,joined_at,last_access,last_login,uploaded,downloaded FROM users WHERE username = $1", username)
 
 	user := User{Username: username}
 	err := row.Scan(
 		&user.ID,
 		&user.Email,
 		&user.PasswordHash,
+		&user.Bio,
 		&user.Enabled,
 		&user.CanLogin,
-		&user.JoinDate,
+		&user.JoinedAt,
 		&user.LastAccess,
 		&user.LastLogin,
 		&user.Uploaded,

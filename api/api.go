@@ -3,19 +3,31 @@ package api
 import (
 	ctx "context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/kataras/iris"
+	"github.com/microcosm-cc/bluemonday"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/mutaborius/boiling-api/db"
 )
 
 type API struct {
 	db  db.BoilingDB
 	app *iris.Application
+
+	c Cache
 }
 
 func New(db db.BoilingDB) (*API, error) {
 	a := &API{db: db}
+	log.Infoln("Building cache...")
+	c, err := NewCache(db)
+	if err != nil {
+		return nil, err
+	}
+	a.c = c
 
 	app := iris.Default()
 	a.app = app
@@ -24,10 +36,15 @@ func New(db db.BoilingDB) (*API, error) {
 	app.Post("/signup", handler(a.postSignup))
 
 	withAuth := app.Party("/", handler(a.withLogin))
-	withAuth.Get("/blogs", handler(a.getBlogs))
+	withAuth.Get("/blogs", handler(a.withPrivilege([]string{"get_blogs"})), handler(a.getBlogs))
 	withAuth.Post("/blogs", handler(a.postBlog))
 	withAuth.Post("/blogs/{id}", handler(a.updateBlog))
 	withAuth.Delete("/blogs/{id}", handler(a.deleteBlog))
+
+	withAuth.Get("/users", handler(a.getUserSelf))
+	withAuth.Get("/users/{id}", handler(a.getUser))
+
+	withAuth.Get("/artists/{id}", handler(a.getArtist))
 
 	return a, nil
 }
@@ -53,6 +70,10 @@ func handler(h func(*context)) iris.Handler {
 		h(c)
 		release(c)
 	}
+}
+
+func sanitizeString(s string) string {
+	return strings.TrimSpace(bluemonday.StrictPolicy().Sanitize(s))
 }
 
 type Response struct {
@@ -82,7 +103,7 @@ func (ctx *context) Error(e error, httpStatusCode int) {
 	ip = ctx.RemoteAddr()
 	method = ctx.Method()
 	path = ctx.Path()
-	ctx.Application().Logger().Error(fmt.Sprintf("--- --- %s %s %s %s", ip, method, path, e.Error()))
+	ctx.Application().Logger().Error(fmt.Sprintf("%d --- %s %s %s %s", httpStatusCode, ip, method, path, e.Error()))
 
 	ctx.StatusCode(httpStatusCode)
 	ctx.JSON(Response{
@@ -96,7 +117,7 @@ func (ctx *context) Fail(e error, httpStatusCode int) {
 	ip = ctx.RemoteAddr()
 	method = ctx.Method()
 	path = ctx.Path()
-	ctx.Application().Logger().Warn(fmt.Sprintf("--- --- %s %s %s %s", ip, method, path, e.Error()))
+	ctx.Application().Logger().Warn(fmt.Sprintf("%d --- %s %s %s %s", httpStatusCode, ip, method, path, e.Error()))
 
 	ctx.StatusCode(httpStatusCode)
 	ctx.JSON(Response{

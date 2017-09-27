@@ -2,12 +2,10 @@ package api
 
 import (
 	"errors"
+	"strings"
 	"time"
 
-	"strings"
-
 	"github.com/kataras/iris"
-	"github.com/microcosm-cc/bluemonday"
 	"github.com/mutaborius/boiling-api/db"
 )
 
@@ -91,10 +89,10 @@ func (e BlogEntry) validate() error {
 }
 
 func (e *BlogEntry) sanitize() {
-	e.Title = bluemonday.StrictPolicy().Sanitize(e.Title)
-	e.Content = bluemonday.UGCPolicy().Sanitize(e.Content)
+	e.Title = sanitizeString(e.Title)
+	e.Content = sanitizeString(e.Content)
 	for i := range e.Tags {
-		e.Tags[i] = strings.ToLower(bluemonday.StrictPolicy().Sanitize(e.Tags[i]))
+		e.Tags[i] = strings.ToLower(sanitizeString(e.Tags[i]))
 	}
 }
 
@@ -138,33 +136,45 @@ func (a *API) updateBlog(ctx *context) {
 		return
 	}
 
-	var entry BlogEntry
-	err = ctx.ReadJSON(&entry)
-	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
-		return
-	}
-	entry.ID = id
-
-	// post as logged-in user (TODO maybe admin can override this?)
-	entry.Author = fromPublicUser(ctx.user)
-	entry.PostedAt = time.Now() // TODO maybe admin can override this?
-
-	err = entry.validate()
-	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
-	}
-
-	entry.sanitize()
-
-	dbE := toBlogEntry(entry)
-	err = a.db.UpdateBlogEntry(dbE)
+	original, err := a.db.GetBlogEntry(id)
 	if err != nil {
 		ctx.Fail(err, iris.StatusBadRequest)
 		return
 	}
 
-	ctx.Success(nil)
+	if original.Author.ID != ctx.user.ID {
+		ctx.Fail(errors.New("only the author or an admin can change posts"), iris.StatusUnauthorized)
+		return
+	}
+
+	var updated BlogEntry
+	err = ctx.ReadJSON(&updated)
+	if err != nil {
+		ctx.Fail(err, iris.StatusBadRequest)
+		return
+	}
+
+	err = updated.validate()
+	if err != nil {
+		ctx.Fail(err, iris.StatusBadRequest)
+		return
+	}
+
+	updated.sanitize()
+
+	// can update title, content and tags
+	original.Title = updated.Title
+	original.Content = updated.Content
+	original.Tags = updated.Tags
+	// TODO admin can update more
+
+	err = a.db.UpdateBlogEntry(*original)
+	if err != nil {
+		ctx.Fail(err, iris.StatusBadRequest)
+		return
+	}
+
+	ctx.Success(BlogResponse{Entry: fromBlogEntry(*original)})
 }
 
 func (a *API) deleteBlog(ctx *context) {
