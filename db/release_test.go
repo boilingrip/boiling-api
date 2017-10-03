@@ -49,10 +49,9 @@ func TestInsertGetDeleteRelease(t *testing.T) {
 
 	r := Release{
 		ReleaseGroup:    ReleaseGroup{ID: g.ID},
-		Edition:         "Special K Edition",
 		Medium:          0,
 		ReleaseDate:     time.Date(2012, 3, 2, 0, 0, 0, 0, time.FixedZone("", 0)),
-		CatalogueNumber: "NS00004",
+		CatalogueNumber: sql.NullString{String: "NS00004"},
 		RecordLabel:     RecordLabel{ID: l.ID},
 		Added:           time.Date(2012, 3, 3, 0, 0, 2, 0, time.FixedZone("", 0)),
 		AddedBy:         User{ID: 1},
@@ -66,10 +65,11 @@ func TestInsertGetDeleteRelease(t *testing.T) {
 
 	got, err := db.GetRelease(r.ID)
 	require.Nil(t, err)
-	require.Equal(t, r.Edition, got.Edition)
+	require.False(t, got.Edition.Valid)
 	require.Equal(t, r.Medium, got.Medium)
 	require.Equal(t, r.ReleaseDate, got.ReleaseDate)
-	require.Equal(t, r.CatalogueNumber, got.CatalogueNumber)
+	require.True(t, got.CatalogueNumber.Valid)
+	require.Equal(t, r.CatalogueNumber.String, got.CatalogueNumber.String)
 	require.Equal(t, r.RecordLabel.ID, got.RecordLabel.ID)
 	require.Equal(t, r.Added, got.Added)
 	require.Equal(t, r.AddedBy.ID, got.AddedBy.ID)
@@ -124,31 +124,27 @@ func TestAutocompleteReleaseTags(t *testing.T) {
 	require.Nil(t, err)
 
 	r1 := Release{
-		ReleaseGroup:    ReleaseGroup{ID: g.ID},
-		Edition:         "Special K Edition",
-		Medium:          0,
-		ReleaseDate:     time.Date(2012, 3, 2, 0, 0, 0, 0, time.FixedZone("", 0)),
-		CatalogueNumber: "NS00004",
-		RecordLabel:     RecordLabel{ID: l.ID},
-		Added:           time.Date(2012, 3, 3, 0, 0, 2, 0, time.FixedZone("", 0)),
-		AddedBy:         User{ID: 1},
-		Original:        true,
-		Tags:            []string{"special.k.edition", "some.tag"},
-		Properties:      map[string]string{"LossyWebApproved": "", "LossyMasterApproved": "true"},
+		ReleaseGroup: ReleaseGroup{ID: g.ID},
+		Medium:       0,
+		ReleaseDate:  time.Date(2012, 3, 2, 0, 0, 0, 0, time.FixedZone("", 0)),
+		RecordLabel:  RecordLabel{ID: l.ID},
+		Added:        time.Date(2012, 3, 3, 0, 0, 2, 0, time.FixedZone("", 0)),
+		AddedBy:      User{ID: 1},
+		Original:     true,
+		Tags:         []string{"special.k.edition", "some.tag"},
+		Properties:   map[string]string{"LossyWebApproved": "", "LossyMasterApproved": "true"},
 	}
 
 	r2 := Release{
-		ReleaseGroup:    ReleaseGroup{ID: g.ID},
-		Edition:         "Special V Edition",
-		Medium:          2,
-		ReleaseDate:     time.Date(2012, 3, 2, 0, 0, 0, 0, time.FixedZone("", 0)),
-		CatalogueNumber: "NS00005",
-		RecordLabel:     RecordLabel{ID: l.ID},
-		Added:           time.Date(2012, 3, 3, 0, 0, 2, 0, time.FixedZone("", 0)),
-		AddedBy:         User{ID: 1},
-		Original:        true,
-		Tags:            []string{"special.v.edition", "some.other.tag"},
-		Properties:      map[string]string{"LossyWebApproved": "", "LossyMasterApproved": "true"},
+		ReleaseGroup: ReleaseGroup{ID: g.ID},
+		Medium:       2,
+		ReleaseDate:  time.Date(2012, 3, 2, 0, 0, 0, 0, time.FixedZone("", 0)),
+		RecordLabel:  RecordLabel{ID: l.ID},
+		Added:        time.Date(2012, 3, 3, 0, 0, 2, 0, time.FixedZone("", 0)),
+		AddedBy:      User{ID: 1},
+		Original:     true,
+		Tags:         []string{"special.v.edition", "some.other.tag"},
+		Properties:   map[string]string{"LossyWebApproved": "", "LossyMasterApproved": "true"},
 	}
 
 	err = db.InsertRelease(&r1)
@@ -209,17 +205,15 @@ func TestReleaseSetProperty(t *testing.T) {
 	require.Nil(t, err)
 
 	r := Release{
-		ReleaseGroup:    ReleaseGroup{ID: g.ID},
-		Edition:         "Special K Edition",
-		Medium:          0,
-		ReleaseDate:     time.Date(2012, 3, 2, 0, 0, 0, 0, time.FixedZone("", 0)),
-		CatalogueNumber: "NS00004",
-		RecordLabel:     RecordLabel{ID: l.ID},
-		Added:           time.Date(2012, 3, 3, 0, 0, 2, 0, time.FixedZone("", 0)),
-		AddedBy:         User{ID: 1},
-		Original:        true,
-		Tags:            []string{"special.k.edition", "some.tag"},
-		Properties:      map[string]string{"LossyWebApproved": "", "LossyMasterApproved": "true"},
+		ReleaseGroup: ReleaseGroup{ID: g.ID},
+		Medium:       0,
+		ReleaseDate:  time.Date(2012, 3, 2, 0, 0, 0, 0, time.FixedZone("", 0)),
+		RecordLabel:  RecordLabel{ID: l.ID},
+		Added:        time.Date(2012, 3, 3, 0, 0, 2, 0, time.FixedZone("", 0)),
+		AddedBy:      User{ID: 1},
+		Original:     true,
+		Tags:         []string{"special.k.edition", "some.tag"},
+		Properties:   map[string]string{"LossyWebApproved": "", "LossyMasterApproved": "true"},
 	}
 
 	err = db.InsertRelease(&r)

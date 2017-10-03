@@ -12,10 +12,10 @@ import (
 type Release struct {
 	ID              int
 	ReleaseGroup    ReleaseGroup
-	Edition         string
+	Edition         sql.NullString
 	Medium          int
 	ReleaseDate     time.Time
-	CatalogueNumber string
+	CatalogueNumber sql.NullString
 	RecordLabel     RecordLabel
 	Torrents        []Torrent
 	Added           time.Time
@@ -97,15 +97,24 @@ func insertReleaseTagsTx(release Release, tx *sql.Tx) error {
 }
 
 func insertReleaseTx(release *Release, tx *sql.Tx) error {
+	var (
+		edition, catalogueNum *string
+	)
+	if len(release.Edition.String) != 0 {
+		edition = &release.Edition.String
+	}
+	if len(release.CatalogueNumber.String) != 0 {
+		catalogueNum = &release.CatalogueNumber.String
+	}
 	err := tx.QueryRow("INSERT INTO releases(edition,medium,release_group,record_label,added,added_by,release_date,catalogue_number,original) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id",
-		release.Edition,
+		edition,
 		release.Medium,
 		release.ReleaseGroup.ID,
 		release.RecordLabel.ID,
 		release.Added,
 		release.AddedBy.ID,
 		release.ReleaseDate,
-		release.CatalogueNumber,
+		catalogueNum,
 		release.Original).Scan(&release.ID)
 	if err != nil {
 		return err

@@ -225,15 +225,15 @@ DROP TABLE IF EXISTS releases CASCADE;
 CREATE TABLE releases
 (
   id               SERIAL PRIMARY KEY,
-  edition          VARCHAR(255) NOT NULL DEFAULT '',
-  medium           INT          NOT NULL,
-  release_group    INT          NOT NULL,
-  record_label     INT          NOT NULL,
-  added            TIMESTAMP    NOT NULL,
-  added_by         INT          NOT NULL,
-  release_date     DATE,
+  medium           INT       NOT NULL,
+  release_group    INT       NOT NULL,
+  record_label     INT       NOT NULL,
+  added            TIMESTAMP NOT NULL,
+  added_by         INT       NOT NULL,
+  release_date     DATE      NOT NULL,
+  original         BOOLEAN   NOT NULL DEFAULT FALSE,
+  edition          VARCHAR(255),
   catalogue_number VARCHAR(50),
-  original         BOOLEAN,
   CONSTRAINT releases_media_id_fk FOREIGN KEY (medium) REFERENCES media (id),
   CONSTRAINT releases_record_label_id_fk FOREIGN KEY (record_label) REFERENCES record_labels (id),
   CONSTRAINT releases_release_group_id_fk FOREIGN KEY (release_group) REFERENCES release_groups (id),
@@ -415,4 +415,7 @@ VALUES
       '2000-01-01 00:00', 0, 0); --password is test
 ALTER SEQUENCE users_id_seq RESTART WITH 2;
 
-INSERT INTO users_privileges(uid, privilege) SELECT 1,id FROM privileges;
+INSERT INTO users_privileges (uid, privilege) SELECT
+                                                1,
+                                                id
+                                              FROM privileges;
