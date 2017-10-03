@@ -53,7 +53,7 @@ func (a *API) containsPrivilege(userPrivileges []int, privilege string) (bool, e
 	return i < len(userPrivileges) && userPrivileges[i] == p, nil
 }
 
-func (a *API) withPrivilege(privileges []string) func(*context) {
+func (a *API) withPrivilege(privileges ...string) func(*context) {
 	a.c.privileges.RLock()
 	defer a.c.privileges.RUnlock()
 	for _, p := range privileges {

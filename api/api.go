@@ -63,14 +63,14 @@ func (a *API) makeRoutes() {
 			{
 				name:     "password",
 				required: true,
-				dType:    dTypeRawString,
+				dType:    dTypeRawString, // postSignup checks if this contains spaces before or after, hence it has to be a raw (non-trimmed) string
 			},
 		})),
 		handler(a.postSignup))
 
 	withAuth := a.app.Party("/", handler(a.withLogin))
-	withAuth.Get("/blogs", handler(a.withPrivilege([]string{"get_blogs"})), handler(a.getBlogs))
-	withAuth.Post("/blogs", handler(a.withPrivilege([]string{"post_blog"})),
+	withAuth.Get("/blogs", handler(a.withPrivilege("get_blogs")), handler(a.getBlogs))
+	withAuth.Post("/blogs", handler(a.withPrivilege("post_blog")),
 		handler(a.withFields([]field{
 			{
 				name:     "title",
@@ -103,7 +103,7 @@ func (a *API) makeRoutes() {
 			},
 		})),
 		handler(a.postBlog))
-	withAuth.Post("/blogs/{id}", handler(a.withPrivilege([]string{"update_blog"})),
+	withAuth.Post("/blogs/{id}", handler(a.withPrivilege("update_blog")),
 		handler(a.withFields([]field{
 			{
 				name:     "title",
@@ -136,7 +136,7 @@ func (a *API) makeRoutes() {
 			},
 		})),
 		handler(a.updateBlog))
-	withAuth.Delete("/blogs/{id}", handler(a.withPrivilege([]string{"delete_blog"})), handler(a.deleteBlog))
+	withAuth.Delete("/blogs/{id}", handler(a.withPrivilege("delete_blog")), handler(a.deleteBlog))
 
 	withAuth.Get("/users", handler(a.getUserSelf))
 	withAuth.Get("/users/{id}", handler(a.getUser))
