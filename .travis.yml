@@ -12,7 +12,6 @@ before_script:
   - psql -c 'CREATE DATABASE boilingtest;' -U postgres
   - psql -c 'GRANT ALL PRIVILEGES ON  DATABASE boilingtest TO boilingtest;' -U postgres
 install:
-- go get -t ./...
 - go get -u github.com/golang/lint/golint
 - go get -u golang.org/x/tools/cmd/goimports
 script:
