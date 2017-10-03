@@ -120,7 +120,7 @@ func (a *API) withFields(fields []field) func(*context) {
 
 	return func(ctx *context) {
 		var err error
-		if ctx.Request().Header.Get("Content-Type") == "multipart/form-data" {
+		if strings.Contains(ctx.Request().Header.Get("Content-Type"), "multipart/form-data") {
 			err = ctx.Request().ParseMultipartForm(10 * 1024 * 1024)
 		} else {
 			err = ctx.Request().ParseForm()
