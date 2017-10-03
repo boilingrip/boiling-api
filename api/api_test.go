@@ -66,6 +66,20 @@ var defaultAPI *struct {
 	wg  *sync.WaitGroup
 }
 
+func givePrivileges(a *API, uid int, privileges ...string) error {
+	var ps []int
+	for _, s := range privileges {
+		p, err := a.c.privileges.LookUp(s)
+		if err != nil {
+			return err
+		}
+
+		ps = append(ps, p)
+	}
+	err := a.db.UpdateUserAddPrivileges(uid, ps)
+	return err
+}
+
 func getDefaultAPIWithDB(d db.BoilingDB) (*API, error) {
 	if defaultAPI != nil {
 		defaultAPI.api.db = d
@@ -130,11 +144,6 @@ func cleanDBWithLogin() (*dbWithLogin, error) {
 	}
 
 	tok, err := d.InsertTokenForUser(*u)
-	if err != nil {
-		return nil, err
-	}
-
-	err = d.UpdateUserAddPrivileges(u.ID, []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
 	if err != nil {
 		return nil, err
 	}

@@ -13,7 +13,9 @@ import (
 func TestGetBlogs(t *testing.T) {
 	tc, err := cleanDBWithLogin()
 	require.Nil(t, err)
-	_, err = getDefaultAPIWithDB(tc.db)
+	a, err := getDefaultAPIWithDB(tc.db)
+	require.Nil(t, err)
+	err = givePrivileges(a, tc.user.ID, "get_blogs")
 	require.Nil(t, err)
 
 	entry := db.BlogEntry{
@@ -53,7 +55,9 @@ func TestGetBlogs(t *testing.T) {
 func TestInsertUpdateDeleteBlog(t *testing.T) {
 	tc, err := cleanDBWithLogin()
 	require.Nil(t, err)
-	_, err = getDefaultAPIWithDB(tc.db)
+	a, err := getDefaultAPIWithDB(tc.db)
+	require.Nil(t, err)
+	err = givePrivileges(a, tc.user.ID, "get_blogs", "post_blog", "update_blog", "delete_blog")
 	require.Nil(t, err)
 
 	entry := BlogEntry{
