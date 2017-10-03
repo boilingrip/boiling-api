@@ -346,7 +346,8 @@ INSERT INTO privileges (id, privilege) VALUES
   (6, 'update_blog_override_posted_at'),
   (7, 'update_blog_override_author'),
   (8, 'delete_blog'),
-  (9, 'delete_blog_not_owner');
+  (9, 'delete_blog_not_owner'),
+  (10, 'get_artist');
 ALTER SEQUENCE privileges_id_seq RESTART WITH 10;
 
 INSERT INTO release_group_types (id, type) VALUES
