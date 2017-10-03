@@ -10,18 +10,18 @@ import (
 )
 
 type BlogEntry struct {
-	ID       int        `json:"id"`
-	Author   PublicUser `json:"author"`
-	Title    string     `json:"title"`
-	PostedAt time.Time  `json:"posted_at"`
-	Content  string     `json:"content"`
-	Tags     []string   `json:"tags"`
+	ID       int       `json:"id"`
+	Author   BaseUser  `json:"author"`
+	Title    string    `json:"title"`
+	PostedAt time.Time `json:"posted_at"`
+	Content  string    `json:"content"`
+	Tags     []string  `json:"tags,omitempty"`
 }
 
-func fromBlogEntry(dbE db.BlogEntry) BlogEntry {
+func blogEntryFromDBBlogEntry(dbE db.BlogEntry) BlogEntry {
 	return BlogEntry{
 		ID:       dbE.ID,
-		Author:   fromPublicUser(dbE.Author),
+		Author:   baseUserFromDBUser(dbE.Author),
 		Title:    dbE.Title,
 		PostedAt: dbE.PostedAt,
 		Content:  dbE.Content,
@@ -29,10 +29,10 @@ func fromBlogEntry(dbE db.BlogEntry) BlogEntry {
 	}
 }
 
-func toBlogEntry(e BlogEntry) db.BlogEntry {
+func dbBlogEntryFromBlogEntry(e BlogEntry) db.BlogEntry {
 	return db.BlogEntry{
 		ID:       e.ID,
-		Author:   toPublicUser(e.Author),
+		Author:   dbUserFromBaseUser(e.Author),
 		Title:    e.Title,
 		PostedAt: e.PostedAt,
 		Content:  e.Content,
@@ -42,6 +42,10 @@ func toBlogEntry(e BlogEntry) db.BlogEntry {
 
 type BlogEntriesResponse struct {
 	Entries []BlogEntry `json:"entries"`
+}
+
+type BlogEntryResponse struct {
+	Entry BlogEntry `json:"entry"`
 }
 
 func (a *API) getBlogs(ctx *context) {
@@ -68,14 +72,10 @@ func (a *API) getBlogs(ctx *context) {
 
 	entries := make([]BlogEntry, 0, len(posts))
 	for i := range posts {
-		entries = append(entries, fromBlogEntry(posts[i]))
+		entries = append(entries, blogEntryFromDBBlogEntry(posts[i]))
 	}
 
 	ctx.Success(BlogEntriesResponse{Entries: entries})
-}
-
-type BlogResponse struct {
-	Entry BlogEntry `json:"entry"`
 }
 
 func (a *API) postBlog(ctx *context) {
@@ -106,7 +106,7 @@ func (a *API) postBlog(ctx *context) {
 		return
 	}
 
-	ctx.Success(BlogResponse{Entry: fromBlogEntry(entry)})
+	ctx.Success(BlogEntryResponse{Entry: blogEntryFromDBBlogEntry(entry)})
 }
 
 func (a *API) updateBlog(ctx *context) {
@@ -160,7 +160,7 @@ func (a *API) updateBlog(ctx *context) {
 		return
 	}
 
-	ctx.Success(BlogResponse{Entry: fromBlogEntry(*original)})
+	ctx.Success(BlogEntryResponse{Entry: blogEntryFromDBBlogEntry(*original)})
 }
 
 func (a *API) deleteBlog(ctx *context) {

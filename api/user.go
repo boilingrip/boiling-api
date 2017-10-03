@@ -8,19 +8,19 @@ import (
 	"github.com/boilingrip/boiling-api/db"
 )
 
-type PublicUser struct {
+type BaseUser struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
 }
 
-func fromPublicUser(dbU db.User) PublicUser {
-	return PublicUser{
+func baseUserFromDBUser(dbU db.User) BaseUser {
+	return BaseUser{
 		ID:       dbU.ID,
 		Username: dbU.Username,
 	}
 }
 
-func toPublicUser(u PublicUser) db.User {
+func dbUserFromBaseUser(u BaseUser) db.User {
 	return db.User{
 		ID:       u.ID,
 		Username: u.Username,
@@ -42,7 +42,7 @@ type User struct {
 	Downloaded   int64      `json:"downloaded"`
 }
 
-func fromUser(dbU db.User) User {
+func userFromDBUser(dbU db.User) User {
 	u := User{
 		ID:           dbU.ID,
 		Username:     dbU.Username,
@@ -66,7 +66,7 @@ func fromUser(dbU db.User) User {
 	return u
 }
 
-func toUser(u User) db.User {
+func dbUserFromUser(u User) db.User {
 	dbU := db.User{
 		ID:           u.ID,
 		Username:     u.Username,
@@ -105,7 +105,7 @@ func (a *API) getUserSelf(ctx *context) {
 	}
 	u.PasswordHash = ""
 
-	ctx.Success(UserResponse{fromUser(*u)})
+	ctx.Success(UserResponse{userFromDBUser(*u)})
 }
 
 func (a *API) getUser(ctx *context) {
@@ -132,5 +132,5 @@ func (a *API) getUser(ctx *context) {
 	u.LastLogin.Valid = false
 	u.CanLogin = false
 
-	ctx.Success(UserResponse{fromUser(*u)})
+	ctx.Success(UserResponse{userFromDBUser(*u)})
 }

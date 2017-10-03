@@ -35,7 +35,7 @@ func (a *API) postLogin(ctx *context) {
 	}
 
 	ctx.Success(LoginResponse{
-		User:  fromUser(*u),
+		User:  userFromDBUser(*u),
 		Token: tok.Token,
 	})
 }
