@@ -12,6 +12,50 @@ type SyncedLookupTable struct {
 	sync.RWMutex
 }
 
+func (s *SyncedLookupTable) MustLookUp(ss string) int {
+	i, err := s.LookUp(ss)
+	if err != nil {
+		panic(fmt.Sprintf("Key not found, cache out of sync? %s", err.Error()))
+	}
+	return i
+}
+
+func (s *SyncedLookupTable) LookUp(ss string) (int, error) {
+	s.RLock()
+	i, err := s.l.LookUp(ss)
+	s.RUnlock()
+	return i, err
+}
+
+func (s *SyncedLookupTable) MustReverseLookUp(i int) string {
+	ss, err := s.ReverseLookUp(i)
+	if err != nil {
+		panic(fmt.Sprintf("Key not found, cache out of sync? %s", err.Error()))
+	}
+	return ss
+}
+
+func (s *SyncedLookupTable) ReverseLookUp(i int) (string, error) {
+	s.RLock()
+	ss, err := s.l.ReverseLookUp(i)
+	s.RUnlock()
+	return ss, err
+}
+
+func (s *SyncedLookupTable) Has(ss string) bool {
+	s.RLock()
+	has := s.l.Has(ss)
+	s.RUnlock()
+	return has
+}
+
+func (s *SyncedLookupTable) HasReverse(i int) bool {
+	s.RLock()
+	has := s.l.HasReverse(i)
+	s.RUnlock()
+	return has
+}
+
 type Cache struct {
 	formats           *SyncedLookupTable
 	leechTypes        *SyncedLookupTable
