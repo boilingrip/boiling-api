@@ -27,7 +27,7 @@ type ArtistAlias struct {
 }
 
 type RoledReleaseGroup struct {
-	Role         string
+	Role         int
 	ReleaseGroup ReleaseGroup
 }
 
@@ -179,7 +179,7 @@ func (db *DB) PopulateReleaseGroups(artist *Artist) error {
 		return errors.New("invalid artist ID")
 	}
 
-	rows, err := db.db.Query("SELECT rr.role,rg.id,rg.name,rgt.type,rg.release_date FROM release_groups rg, release_groups_artists rga, release_roles rr, release_group_types rgt WHERE rg.id = rga.release_group AND rga.artist = $1 AND rr.id = rga.role AND rgt.id = rg.type", artist.ID)
+	rows, err := db.db.Query("SELECT rga.role,rg.id,rg.name,rgt.type,rg.release_date FROM release_groups rg, release_groups_artists rga, release_group_types rgt WHERE rg.id = rga.release_group AND rga.artist = $1 AND rgt.id = rg.type", artist.ID)
 	if err != nil {
 		return err
 	}
