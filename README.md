@@ -1,6 +1,11 @@
 # boiling-api
 *spicy hot stuff so spicy oh wow*
 
+[![Build Status](https://api.travis-ci.org/boilingrip/boiling-api.svg?branch=master)](https://travis-ci.org/boilingrip/boiling-api)
+[![Go Report Card](https://goreportcard.com/badge/github.com/boilingrip/boiling-api)](https://goreportcard.com/report/github.com/boilingrip/boiling-api)
+[![GoDoc](https://godoc.org/github.com/boilingrip/boiling-api?status.svg)](https://godoc.org/github.com/boilingrip/boiling-api)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 This is the home of the *boiling* project.
 Boiling aims to be an open-source software for private trackers.
 
