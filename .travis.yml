@@ -15,6 +15,7 @@ install:
 - go get -u github.com/golang/lint/golint
 - go get -u golang.org/x/tools/cmd/goimports
 script:
+- go get -t github.com/boilingrip/boiling-api/...
 - go test -v -p 1 $(go list ./... | grep -v /vendor/)
 - go vet $(go list ./... | grep -v /vendor/)
 - diff <(goimports -d $(find . -type f -name '*.go' -not -path "./vendor/*")) <(printf "")
