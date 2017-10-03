@@ -133,7 +133,7 @@ func cleanDBWithLogin() (*dbWithLogin, error) {
 		return nil, err
 	}
 
-	err = d.UpdateUserAddPrivileges(u.ID,[]int{0,1,2,3,4,5})
+	err = d.UpdateUserAddPrivileges(u.ID, []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
 
 	toReturn := &dbWithLogin{
 		db:       d,

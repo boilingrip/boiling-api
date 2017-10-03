@@ -2,9 +2,9 @@ package api
 
 import (
 	"errors"
-	"time"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/kataras/iris"
 )
@@ -36,7 +36,6 @@ func (a *API) withLogin(ctx *context) {
 	}
 
 	ctx.user = token.User
-	ctx.loggedIn = true
 
 	ctx.Next()
 }

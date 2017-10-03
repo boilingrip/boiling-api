@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"time"
 
 	"github.com/kataras/iris"
@@ -111,7 +110,7 @@ func (a *API) getUserSelf(ctx *context) {
 func (a *API) getUser(ctx *context) {
 	id, err := ctx.Params().GetInt("id")
 	if err != nil {
-		ctx.Fail(errors.New("invalid ID"), iris.StatusBadRequest)
+		ctx.Fail(userError(err, "invalid ID"), iris.StatusBadRequest)
 		return
 	}
 
@@ -122,7 +121,7 @@ func (a *API) getUser(ctx *context) {
 
 	u, err := a.db.GetUser(id)
 	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
+		ctx.Fail(userError(err, "not found"), iris.StatusBadRequest)
 		return
 	}
 	// remove confidential stuff TODO paranoia?

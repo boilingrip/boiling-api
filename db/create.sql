@@ -339,11 +339,15 @@ CREATE TABLE api_tokens
 INSERT INTO privileges (id, privilege) VALUES
   (0, 'get_blogs'),
   (1, 'post_blog'),
-  (2, 'update_blog'),
-  (3, 'update_blog_set_posted_at'),
-  (4, 'update_blog_set_posted_by'),
-  (5, 'update_blog_set_tags');
-ALTER SEQUENCE privileges_id_seq RESTART WITH 6;
+  (2, 'post_blog_override_posted_at'),
+  (3, 'post_blog_override_author'),
+  (4, 'update_blog'),
+  (5, 'update_blog_not_owner'),
+  (6, 'update_blog_override_posted_at'),
+  (7, 'update_blog_override_author'),
+  (8, 'delete_blog'),
+  (9, 'delete_blog_not_owner');
+ALTER SEQUENCE privileges_id_seq RESTART WITH 10;
 
 INSERT INTO release_group_types (id, type) VALUES
   (0, 'Album'),

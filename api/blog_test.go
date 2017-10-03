@@ -66,7 +66,10 @@ func TestInsertUpdateDeleteBlog(t *testing.T) {
 	// Post
 	resp := e.POST("/blogs").
 		WithHeader("X-User-Token", tc.token).
-		WithJSON(entry).
+		WithFormField("title", entry.Title).
+		WithFormField("content", entry.Content).
+		WithFormField("tags", entry.Tags[0]).
+		WithFormField("tags", entry.Tags[1]).
 		Expect().Status(200)
 
 	obj := resp.JSON().Object()
@@ -88,7 +91,9 @@ func TestInsertUpdateDeleteBlog(t *testing.T) {
 
 	resp = e.POST("/blogs/{id}", id).
 		WithHeader("X-User-Token", tc.token).
-		WithJSON(entry).
+		WithFormField("title", entry.Title).
+		WithFormField("content", entry.Content).
+		WithFormField("tags", entry.Tags[0]).
 		Expect().Status(200)
 
 	obj = resp.JSON().Object()

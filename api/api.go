@@ -29,24 +29,119 @@ func New(db db.BoilingDB) (*API, error) {
 	}
 	a.c = c
 
-	app := iris.Default()
-	a.app = app
+	a.app = iris.Default()
+	a.makeRoutes()
 
-	app.Post("/login", handler(a.postLogin))
-	app.Post("/signup", handler(a.postSignup))
+	return a, nil
+}
 
-	withAuth := app.Party("/", handler(a.withLogin))
+func (a *API) makeRoutes() {
+	a.app.Post("/login", handler(a.withFields([]field{
+		{
+			name:     "username",
+			required: true,
+			dType:    dTypeString,
+		},
+		{
+			name:     "password",
+			required: true,
+			dType:    dTypeUnsafeString,
+		},
+	})), handler(a.postLogin))
+	a.app.Post("/signup",
+		handler(a.withFields([]field{
+			{
+				name:     "username",
+				required: true,
+				dType:    dTypeUnsafeString,
+			},
+			{
+				name:     "email",
+				required: true,
+				dType:    dTypeUnsafeString,
+			},
+			{
+				name:     "password",
+				required: true,
+				dType:    dTypeRawString,
+			},
+		})),
+		handler(a.postSignup))
+
+	withAuth := a.app.Party("/", handler(a.withLogin))
 	withAuth.Get("/blogs", handler(a.withPrivilege([]string{"get_blogs"})), handler(a.getBlogs))
-	withAuth.Post("/blogs", handler(a.postBlog))
-	withAuth.Post("/blogs/{id}", handler(a.updateBlog))
-	withAuth.Delete("/blogs/{id}", handler(a.deleteBlog))
+	withAuth.Post("/blogs", handler(a.withPrivilege([]string{"post_blog"})),
+		handler(a.withFields([]field{
+			{
+				name:     "title",
+				required: true,
+				dType:    dTypeString,
+			},
+			{
+				name:     "content",
+				required: true,
+				dType:    dTypeString,
+			},
+			{
+				name:     "tags",
+				required: true,
+				dType:    dTypeTags,
+			},
+			{
+				name:           "author",
+				dType:          dTypeInt,
+				needsPrivilege: "post_blog_override_author",
+				validator: func(_ *context, v interface{}) bool {
+					author := v.(int)
+					return author >= 0
+				},
+			},
+			{
+				name:           "posted_at",
+				dType:          dTypeDate,
+				needsPrivilege: "post_blog_override_posted_at",
+			},
+		})),
+		handler(a.postBlog))
+	withAuth.Post("/blogs/{id}", handler(a.withPrivilege([]string{"update_blog"})),
+		handler(a.withFields([]field{
+			{
+				name:     "title",
+				required: true,
+				dType:    dTypeString,
+			},
+			{
+				name:     "content",
+				required: true,
+				dType:    dTypeString,
+			},
+			{
+				name:     "tags",
+				required: true,
+				dType:    dTypeTags,
+			},
+			{
+				name:           "author",
+				dType:          dTypeInt,
+				needsPrivilege: "update_blog_override_author",
+				validator: func(_ *context, v interface{}) bool {
+					author := v.(int)
+					return author >= 0
+				},
+			},
+			{
+				name:           "posted_at",
+				dType:          dTypeDate,
+				needsPrivilege: "update_blog_override_posted_at",
+			},
+		})),
+		handler(a.updateBlog))
+	withAuth.Delete("/blogs/{id}", handler(a.withPrivilege([]string{"delete_blog"})), handler(a.deleteBlog))
 
 	withAuth.Get("/users", handler(a.getUserSelf))
 	withAuth.Get("/users/{id}", handler(a.getUser))
 
 	withAuth.Get("/artists/{id}", handler(a.getArtist))
-
-	return a, nil
 }
 
 func (a *API) Run(runner iris.Runner) error {
@@ -82,10 +177,27 @@ type Response struct {
 	Message string      `json:"message,omitempty"`
 }
 
+type errorWithMessage struct {
+	original error
+	message  string
+}
+
+func (e errorWithMessage) Error() string {
+	return e.message
+}
+
+func userError(original error, message string) error {
+	return errorWithMessage{
+		original: original,
+		message:  message,
+	}
+}
+
 type context struct {
 	iris.Context
-	user     db.User
-	loggedIn bool
+	user db.User
+
+	fields
 }
 
 func (ctx *context) Next() {
@@ -98,6 +210,8 @@ func (ctx *context) Next() {
 	}
 }
 
+const internalServerError = "internal server error"
+
 func (ctx *context) Error(e error, httpStatusCode int) {
 	var ip, method, path string
 	ip = ctx.RemoteAddr()
@@ -108,7 +222,7 @@ func (ctx *context) Error(e error, httpStatusCode int) {
 	ctx.StatusCode(httpStatusCode)
 	ctx.JSON(Response{
 		Status:  "error",
-		Message: e.Error(),
+		Message: internalServerError,
 	})
 }
 
@@ -117,7 +231,12 @@ func (ctx *context) Fail(e error, httpStatusCode int) {
 	ip = ctx.RemoteAddr()
 	method = ctx.Method()
 	path = ctx.Path()
-	ctx.Application().Logger().Warn(fmt.Sprintf("%d --- %s %s %s %s", httpStatusCode, ip, method, path, e.Error()))
+	ue, ok := e.(errorWithMessage)
+	if !ok {
+		ctx.Application().Logger().Warn(fmt.Sprintf("%d --- %s %s %s %s", httpStatusCode, ip, method, path, e.Error()))
+	} else {
+		ctx.Application().Logger().Warn(fmt.Sprintf("%d --- %s %s %s %s (%s)", httpStatusCode, ip, method, path, ue.original.Error(), ue.message))
+	}
 
 	ctx.StatusCode(httpStatusCode)
 	ctx.JSON(Response{
@@ -147,6 +266,7 @@ func acquire(original iris.Context) *context {
 
 	c := contextPool.Get().(*context)
 	c.Context = original
+	c.fields.fields = make(map[string]interface{})
 	return c
 }
 

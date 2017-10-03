@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"time"
 
 	"github.com/kataras/iris"
@@ -13,20 +12,12 @@ type LoginResponse struct {
 }
 
 func (a *API) postLogin(ctx *context) {
-	username := ctx.FormValue("username")
-	password := ctx.FormValue("password")
-	if len(username) == 0 {
-		ctx.Fail(errors.New("missing username"), iris.StatusBadRequest)
-		return
-	}
-	if len(password) == 0 {
-		ctx.Fail(errors.New("missing password"), iris.StatusBadRequest)
-		return
-	}
+	username := ctx.fields.mustGetString("username")
+	password := ctx.fields.mustGetString("password")
 
 	u, err := a.db.LoginAndGetUser(username, password)
 	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
+		ctx.Fail(userError(err, "unable to log in"), iris.StatusBadRequest)
 		return
 	}
 	u.PasswordHash = "" // just to be sure

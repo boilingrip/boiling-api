@@ -8,21 +8,10 @@ import (
 )
 
 func (a *API) postSignup(ctx *context) {
-	username := ctx.FormValue("username")
-	password := ctx.FormValue("password")
-	email := ctx.FormValue("email")
-	if len(username) == 0 {
-		ctx.Fail(errors.New("missing username"), iris.StatusBadRequest)
-		return
-	}
-	if len(password) == 0 {
-		ctx.Fail(errors.New("missing password"), iris.StatusBadRequest)
-		return
-	}
-	if len(email) == 0 {
-		ctx.Fail(errors.New("missing email"), iris.StatusBadRequest)
-		return
-	}
+	username := ctx.fields.mustGetString("username")
+	password := ctx.fields.mustGetString("password")
+	email := ctx.fields.mustGetString("email")
+
 	if !strings.Contains(email, "@") || sanitizeString(email) != email {
 		ctx.Fail(errors.New("invalid email"), iris.StatusBadRequest)
 		return
@@ -38,7 +27,7 @@ func (a *API) postSignup(ctx *context) {
 
 	err := a.db.SignUpUser(username, password, email)
 	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
+		ctx.Fail(userError(err, "unable to sign up"), iris.StatusBadRequest)
 		return
 	}
 

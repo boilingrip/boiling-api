@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/kataras/iris"
@@ -47,13 +46,13 @@ type BlogEntriesResponse struct {
 func (a *API) getBlogs(ctx *context) {
 	offset, err := ctx.URLParamInt("offset")
 	if err != nil || offset < 0 {
-		ctx.Fail(errors.New("invalid offset"), iris.StatusBadRequest)
+		ctx.Fail(userError(err, "invalid offset"), iris.StatusBadRequest)
 		return
 	}
 
 	limit, err := ctx.URLParamInt("limit")
 	if err != nil || limit < 0 {
-		ctx.Fail(errors.New("invalid limit"), iris.StatusBadRequest)
+		ctx.Fail(userError(err, "invalid limit"), iris.StatusBadRequest)
 		return
 	}
 	if limit > 50 {
@@ -78,57 +77,41 @@ type BlogResponse struct {
 	Entry BlogEntry `json:"entry"`
 }
 
-func (e BlogEntry) validate() error {
-	if len(e.Title) == 0 {
-		return errors.New("missing Title")
-	}
-	if len(e.Content) == 0 {
-		return errors.New("missing Content")
-	}
-	return nil
-}
-
-func (e *BlogEntry) sanitize() {
-	e.Title = sanitizeString(e.Title)
-	e.Content = sanitizeString(e.Content)
-	for i := range e.Tags {
-		e.Tags[i] = strings.ToLower(sanitizeString(e.Tags[i]))
-	}
-}
-
 func (a *API) postBlog(ctx *context) {
-	var entry BlogEntry
-	err := ctx.ReadJSON(&entry)
+	title := ctx.fields.mustGetString("title")
+	content := ctx.fields.mustGetString("content")
+	tags := ctx.fields.mustGetTags("tags")
+	author, authorSet := ctx.fields.getInt("author")
+	postedAt, postedAtSet := ctx.fields.getDate("posted_at")
+
+	entry := db.BlogEntry{
+		Title:    title,
+		Content:  content,
+		Tags:     tags,
+		Author:   ctx.user,
+		PostedAt: time.Now(),
+	}
+
+	if authorSet {
+		entry.Author = db.User{ID: author}
+	}
+	if postedAtSet {
+		entry.PostedAt = postedAt
+	}
+
+	err := a.db.InsertBlogEntry(&entry)
 	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
+		ctx.Fail(userError(err, "unable to post blog"), iris.StatusBadRequest)
 		return
 	}
 
-	// post as logged-in user (TODO maybe admin can override this?)
-	entry.Author = fromPublicUser(ctx.user)
-	entry.PostedAt = time.Now() // TODO maybe admin can override this?
-
-	err = entry.validate()
-	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
-	}
-
-	entry.sanitize()
-
-	dbE := toBlogEntry(entry)
-	err = a.db.InsertBlogEntry(&dbE)
-	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
-		return
-	}
-
-	ctx.Success(BlogResponse{Entry: fromBlogEntry(dbE)})
+	ctx.Success(BlogResponse{Entry: fromBlogEntry(entry)})
 }
 
 func (a *API) updateBlog(ctx *context) {
 	id, err := ctx.Params().GetInt("id")
 	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
+		ctx.Fail(userError(err, "invalid ID"), iris.StatusBadRequest)
 		return
 	}
 	if id < 0 {
@@ -136,41 +119,43 @@ func (a *API) updateBlog(ctx *context) {
 		return
 	}
 
+	title := ctx.fields.mustGetString("title")
+	content := ctx.fields.mustGetString("content")
+	tags := ctx.fields.mustGetTags("tags")
+	author, authorSet := ctx.fields.getInt("author")
+	postedAt, postedAtSet := ctx.fields.getDate("posted_at")
+
+	canEditForeignPost, err := a.containsPrivilege(ctx.user.Privileges, "update_blog_not_owner")
+	if err != nil {
+		ctx.Error(err, iris.StatusInternalServerError)
+		return
+	}
+
 	original, err := a.db.GetBlogEntry(id)
 	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
+		ctx.Fail(userError(err, "not found"), iris.StatusBadRequest)
 		return
 	}
 
-	if original.Author.ID != ctx.user.ID {
-		ctx.Fail(errors.New("only the author or an admin can change posts"), iris.StatusUnauthorized)
+	if !canEditForeignPost && original.Author.ID != ctx.user.ID {
+		ctx.Fail(errors.New("can only edit own posts (missing update_blog_not_owner privilege)"), iris.StatusUnauthorized)
 		return
 	}
-
-	var updated BlogEntry
-	err = ctx.ReadJSON(&updated)
-	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
-		return
-	}
-
-	err = updated.validate()
-	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
-		return
-	}
-
-	updated.sanitize()
 
 	// can update title, content and tags
-	original.Title = updated.Title
-	original.Content = updated.Content
-	original.Tags = updated.Tags
-	// TODO admin can update more
+	original.Title = title
+	original.Content = content
+	original.Tags = tags
+	if authorSet {
+		original.Author = db.User{ID: author}
+	}
+	if postedAtSet {
+		original.PostedAt = postedAt
+	}
 
 	err = a.db.UpdateBlogEntry(*original)
 	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
+		ctx.Fail(userError(err, "unable to update blog"), iris.StatusBadRequest)
 		return
 	}
 
@@ -180,7 +165,7 @@ func (a *API) updateBlog(ctx *context) {
 func (a *API) deleteBlog(ctx *context) {
 	id, err := ctx.Params().GetInt("id")
 	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
+		ctx.Fail(userError(err, "invalid ID"), iris.StatusBadRequest)
 		return
 	}
 	if id < 0 {
@@ -188,9 +173,28 @@ func (a *API) deleteBlog(ctx *context) {
 		return
 	}
 
+	canDeleteForeignPost, err := a.containsPrivilege(ctx.user.Privileges, "delete_blog_not_owner")
+	if err != nil {
+		ctx.Error(err, iris.StatusInternalServerError)
+		return
+	}
+
+	if !canDeleteForeignPost {
+		original, err := a.db.GetBlogEntry(id)
+		if err != nil {
+			ctx.Fail(userError(err, "not found"), iris.StatusBadRequest)
+			return
+		}
+
+		if original.Author.ID != ctx.user.ID {
+			ctx.Fail(errors.New("can only delete own posts (missing delete_blog_not_owner privilege)"), iris.StatusUnauthorized)
+			return
+		}
+	}
+
 	err = a.db.DeleteBlogEntry(id)
 	if err != nil {
-		ctx.Fail(err, iris.StatusBadRequest)
+		ctx.Fail(userError(err, "unable to delete blog"), iris.StatusBadRequest)
 		return
 	}
 
