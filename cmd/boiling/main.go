@@ -4,8 +4,8 @@ import (
 	"github.com/kataras/iris"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/mutaborius/boiling-api/api"
-	"github.com/mutaborius/boiling-api/db"
+	"github.com/boilingrip/boiling-api/api"
+	"github.com/boilingrip/boiling-api/db"
 )
 
 func main() {

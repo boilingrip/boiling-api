@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/kataras/iris"
-	"github.com/mutaborius/boiling-api/db"
+	"github.com/boilingrip/boiling-api/db"
 )
 
 type PublicUser struct {

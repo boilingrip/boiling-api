@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/mutaborius/boiling-api/db"
+	"github.com/boilingrip/boiling-api/db"
 )
 
 type SyncedLookupTable struct {

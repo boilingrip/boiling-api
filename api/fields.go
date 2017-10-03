@@ -2,11 +2,9 @@ package api
 
 import (
 	"fmt"
-	"time"
-
 	"strconv"
-
 	"strings"
+	"time"
 
 	"github.com/kataras/iris"
 )

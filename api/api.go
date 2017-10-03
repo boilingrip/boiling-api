@@ -10,7 +10,7 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/mutaborius/boiling-api/db"
+	"github.com/boilingrip/boiling-api/db"
 )
 
 type API struct {

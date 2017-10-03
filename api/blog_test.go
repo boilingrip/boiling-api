@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mutaborius/boiling-api/db"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/gavv/httpexpect.v1"
+
+	"github.com/boilingrip/boiling-api/db"
 )
 
 func TestGetBlogs(t *testing.T) {
