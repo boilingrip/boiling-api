@@ -47,12 +47,12 @@ If every tracker grabs some alpha release and starts months of development on to
 
 - Pre-everything
 - No tracker integration yet
-- Nothing is being cached yet
-- All errors are just spilled to the user - need distinct error types at some point
+- Almost nothing is being cached yet
+- Some errors are just spilled to the user
 - Database layer basics somewhat fleshed out, proof-of-concept shows that unit-testing the DB layer works, is not too much work and is useful
 - API layer draft. End-to-end testing of API methods is a little cumbersome but works
-- API has no concept of rights, everyone can do everything for now
-- Need a class/rights/permissions/... system
+- API permissions draft. They work, but are a bit clumsy, needs fine-tuning
+- There's no classes, only permissions for certain endpoints/methods and certain parameter overrides. Might need to change at some point
 
 ## Ideas
 
@@ -70,11 +70,11 @@ If every tracker grabs some alpha release and starts months of development on to
     > Because that way it's much easier to write safe and clean code.
         We can guarantee that a middleware to check permissions runs for every request.
         We can ensure that every interaction with the data has to pass through the API.
-        Things like rate limiting or permissions are trivial to implement.
+        Things like rate limiting or permissions, and input sanitization are trivial to implement.
 - Are you running a private tracker??
     > No, I just write this software. Don't send me DMCA notices.
 - Can I test it?
-    > A public instance will be running at `api.boiling.rip:8234`, resets every 24 hours or so.
+    > A public instance will be running at `api.boiling.rip:8234` at some point, resets every 24 hours or so.
         You'll need an API key. 
         Or just run your own.
 - Is this project affiliated with chihaya?
