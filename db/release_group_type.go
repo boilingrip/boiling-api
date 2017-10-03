@@ -1,6 +1,5 @@
 package db
 
-
 func (db *DB) GetAllReleaseGroupTypes() (map[int]string, error) {
 	rows, err := db.db.Query("SELECT id,type FROM release_group_types")
 	if err != nil {

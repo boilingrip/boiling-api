@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/kataras/iris"
+
 	"github.com/boilingrip/boiling-api/db"
 )
 
