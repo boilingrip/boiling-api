@@ -15,7 +15,10 @@ type Passkey struct {
 	Valid     bool
 }
 
-const passkeyLength = 64
+// passkeyLength defines the length of the passkey.
+// Note that this is the number of random bytes generated - they're then base16
+// encoded, so the string representation is actually 64 characters long.
+const passkeyLength = 32
 
 func (db *DB) GetPasskeyForUser(id int) (*Passkey, error) {
 	if id < 0 {
@@ -82,7 +85,7 @@ func (db *DB) GenerateNewPasskeyForUser(id int) (string, error) {
 		return "", err
 	}
 
-	passkey := generateRandomAlphanumeric(passkeyLength)
+	passkey := generateRandomKey(passkeyLength)
 
 	err = generateNewPasskeyForUserTx(id, passkey, tx)
 	if err != nil {

@@ -21,7 +21,7 @@ func TestInsertGetToken(t *testing.T) {
 	require.Equal(t, u.ID, token.User.ID)
 	require.NotEmpty(t, token.Token)
 	require.NotEmpty(t, token.CreatedAt)
-	require.Equal(t, tokenLength, len(token.Token))
+	require.Equal(t, tokenLength*2, len(token.Token))
 
 	token2, err := db.GetToken(token.Token)
 	require.Nil(t, err)

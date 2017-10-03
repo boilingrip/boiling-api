@@ -1,8 +1,9 @@
 package db
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
-	"math/rand"
 	"time"
 )
 
@@ -12,20 +13,23 @@ type APIToken struct {
 	User      User
 }
 
-const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-func generateRandomAlphanumeric(length int) string {
-	s := make([]byte, length)
-	for i := 0; i < len(s); i++ {
-		s[i] = alphabet[rand.Intn(len(alphabet))]
+func generateRandomKey(length int) string {
+	buf := make([]byte, length)
+	_, err := rand.Read(buf)
+	if err != nil {
+		panic(err) // out of randomness, should never happen
 	}
-	return string(s)
+
+	return hex.EncodeToString(buf)
 }
 
-const tokenLength = 128
+// tokenLength defines the length of an API token.
+// Note that this is the number of random bytes generated - they're then base16
+// encoded, so the string representation is actually 128 characters long.
+const tokenLength = 64
 
 func (db *DB) InsertTokenForUser(u User) (*APIToken, error) {
-	s := generateRandomAlphanumeric(tokenLength)
+	s := generateRandomKey(tokenLength)
 	var t time.Time
 
 	err := db.db.QueryRow("INSERT INTO api_tokens(token,created_at,uid) VALUES ($1,NOW(),$2) RETURNING created_at", s, u.ID).Scan(&t)
