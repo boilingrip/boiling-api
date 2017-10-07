@@ -1,7 +1,10 @@
 package api
 
 import (
+	"errors"
 	"time"
+
+	"github.com/kataras/iris"
 
 	"github.com/boilingrip/boiling-api/db"
 )
@@ -59,8 +62,8 @@ func (a *API) releaseGroupFromDBReleaseGroup(dbRG *db.ReleaseGroup) ReleaseGroup
 }
 
 type RoledArtist struct {
-	Role   string
-	Artist BaseArtist
+	Role   string     `json:"role"`
+	Artist BaseArtist `json:"artist"`
 }
 
 func (a *API) roledArtistFromDBRoledArtist(dbra *db.RoledArtist) RoledArtist {
@@ -72,4 +75,30 @@ func (a *API) roledArtistFromDBRoledArtist(dbra *db.RoledArtist) RoledArtist {
 
 type ReleaseGroupResponse struct {
 	ReleaseGroup ReleaseGroup `json:"release_group"`
+}
+
+func (a *API) getReleaseGroup(ctx *context) {
+	id, err := ctx.Params().GetInt("id")
+	if err != nil {
+		ctx.Fail(userError(err, "invalid ID"), iris.StatusBadRequest)
+		return
+	}
+	if id < 0 {
+		ctx.Fail(errors.New("invalid ID"), iris.StatusBadRequest)
+		return
+	}
+
+	group, err := a.db.GetReleaseGroup(id)
+	if err != nil {
+		ctx.Fail(userError(err, "not found"), iris.StatusNotFound)
+		return
+	}
+
+	err = a.db.PopulateReleases(group)
+	if err != nil {
+		ctx.Error(err, iris.StatusInternalServerError)
+		return
+	}
+
+	ctx.Success(ReleaseGroupResponse{ReleaseGroup: a.releaseGroupFromDBReleaseGroup(group)})
 }

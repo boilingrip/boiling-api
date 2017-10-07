@@ -142,6 +142,8 @@ func (a *API) makeRoutes() {
 	withAuth.Get("/users/{id}", handler(a.getUser))
 
 	withAuth.Get("/artists/{id}", handler(a.withPrivilege("get_artist")), handler(a.getArtist))
+
+	withAuth.Get("/release_groups/{id}", handler(a.withPrivilege("get_release_group")), handler(a.getReleaseGroup))
 }
 
 func (a *API) Run(runner iris.Runner) error {
