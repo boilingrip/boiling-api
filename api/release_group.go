@@ -6,6 +6,22 @@ import (
 	"github.com/boilingrip/boiling-api/db"
 )
 
+type BaseReleaseGroup struct {
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	Type        string    `json:"type"`
+	ReleaseDate time.Time `json:"release_date"`
+}
+
+func (a *API) baseReleaseGroupFromDBReleaseGroup(dbRG *db.ReleaseGroup) BaseReleaseGroup {
+	return BaseReleaseGroup{
+		ID:          dbRG.ID,
+		Name:        dbRG.Name,
+		Type:        a.c.releaseGroupTypes.MustReverseLookUp(dbRG.Type),
+		ReleaseDate: dbRG.ReleaseDate,
+	}
+}
+
 type ReleaseGroup struct {
 	ID          int           `json:"id"`
 	Name        string        `json:"name"` // Album title

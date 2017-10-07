@@ -10,14 +10,14 @@ import (
 )
 
 type Artist struct {
-	ID            int                       `json:"id"`
-	Name          string                    `json:"name"`
-	Aliases       []ArtistAlias             `json:"aliases,omitempty"`
-	ReleaseGroups map[string][]ReleaseGroup `json:"release_groups,omitempty"`
-	Added         time.Time                 `json:"added"`
-	AddedBy       BaseUser                  `json:"added_by"`
-	Bio           *string                   `json:"bio,omitempty"`
-	Tags          []string                  `json:"tags,omitempty"`
+	ID            int                 `json:"id"`
+	Name          string              `json:"name"`
+	Aliases       []ArtistAlias       `json:"aliases,omitempty"`
+	ReleaseGroups []RoledReleaseGroup `json:"release_groups,omitempty"`
+	Added         time.Time           `json:"added"`
+	AddedBy       BaseUser            `json:"added_by"`
+	Bio           *string             `json:"bio,omitempty"`
+	Tags          []string            `json:"tags,omitempty"`
 }
 
 func (a *API) artistFromDBArtist(dbA *db.Artist) Artist {
@@ -36,15 +36,25 @@ func (a *API) artistFromDBArtist(dbA *db.Artist) Artist {
 		artist.Aliases = append(artist.Aliases, alias)
 	}
 	if len(dbA.ReleaseGroups) > 0 {
-		artist.ReleaseGroups = make(map[string][]ReleaseGroup)
 		for _, dbg := range dbA.ReleaseGroups {
-			role := a.c.releaseRoles.MustReverseLookUp(dbg.Role)
-			rg := a.releaseGroupFromDBReleaseGroup(&dbg.ReleaseGroup)
-			artist.ReleaseGroups[role] = append(artist.ReleaseGroups[role], rg)
+			rg := a.roledReleaseGroupFromDBRoledReleaseGroup(&dbg)
+			artist.ReleaseGroups = append(artist.ReleaseGroups, rg)
 		}
 	}
 
 	return artist
+}
+
+type RoledReleaseGroup struct {
+	Role         string           `json:"role"`
+	ReleaseGroup BaseReleaseGroup `json:"release_group"`
+}
+
+func (a *API) roledReleaseGroupFromDBRoledReleaseGroup(dbrg *db.RoledReleaseGroup) RoledReleaseGroup {
+	return RoledReleaseGroup{
+		Role:         a.c.releaseRoles.MustReverseLookUp(dbrg.Role),
+		ReleaseGroup: a.baseReleaseGroupFromDBReleaseGroup(&dbrg.ReleaseGroup),
+	}
 }
 
 type ArtistAlias struct {
@@ -91,6 +101,12 @@ func (a *API) getArtist(ctx *context) {
 	artist, err := a.db.GetArtist(id)
 	if err != nil {
 		ctx.Fail(userError(err, "not found"), iris.StatusNotFound)
+		return
+	}
+
+	err = a.db.PopulateReleaseGroups(artist)
+	if err != nil {
+		ctx.Error(err, iris.StatusInternalServerError)
 		return
 	}
 
