@@ -179,7 +179,7 @@ func (db *DB) PopulateReleaseGroups(artist *Artist) error {
 		return errors.New("invalid artist ID")
 	}
 
-	rows, err := db.db.Query("SELECT rga.role,rg.id,rg.name,rgt.type,rg.release_date FROM release_groups rg, release_groups_artists rga, release_group_types rgt WHERE rg.id = rga.release_group AND rga.artist = $1 AND rgt.id = rg.type", artist.ID)
+	rows, err := db.db.Query("SELECT rga.role,rg.id,rg.name,rg.type,rg.release_date FROM release_groups rg, release_groups_artists rga WHERE rg.id = rga.release_group AND rga.artist = $1", artist.ID)
 	if err != nil {
 		return err
 	}
