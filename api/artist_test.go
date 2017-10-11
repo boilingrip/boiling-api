@@ -93,3 +93,143 @@ func TestGetArtist(t *testing.T) {
 	rGroup.ValueEqual("type", "Album")
 	rGroup.ValueEqual("release_date", g.ReleaseDate)
 }
+
+func TestAutocompleteArtist(t *testing.T) {
+	tc, err := cleanDBWithLogin()
+	require.Nil(t, err)
+	a, err := getDefaultAPIWithDB(tc.db)
+	require.Nil(t, err)
+	err = givePrivileges(a, tc.user.ID, "get_artist")
+	require.Nil(t, err)
+
+	a1 := db.Artist{
+		Name: "test1",
+		Bio:  sql.NullString{String: "Some bio"},
+		Aliases: []db.ArtistAlias{{
+			Alias:   "best1",
+			Added:   time.Date(2010, 03, 02, 12, 34, 0, 0, time.FixedZone("", 0)),
+			AddedBy: db.User{ID: 1}}},
+		Tags:    []string{"tag1", "tag2"},
+		Added:   time.Date(2010, 03, 02, 12, 34, 0, 0, time.FixedZone("", 0)),
+		AddedBy: db.User{ID: 1},
+	}
+
+	a2 := db.Artist{
+		Name: "some other artist",
+		Bio:  sql.NullString{String: "Some bio"},
+		Aliases: []db.ArtistAlias{{
+			Alias:   "test2",
+			Added:   time.Date(2010, 03, 02, 12, 34, 0, 0, time.FixedZone("", 0)),
+			AddedBy: db.User{ID: 1}}},
+		Tags:    []string{"tag3", "tag4"},
+		Added:   time.Date(2010, 03, 02, 12, 34, 0, 0, time.FixedZone("", 0)),
+		AddedBy: db.User{ID: 1},
+	}
+
+	err = tc.db.InsertArtist(&a1)
+	require.Nil(t, err)
+	err = tc.db.InsertArtist(&a2)
+	require.Nil(t, err)
+
+	e := httpexpect.New(t, "http://localhost:8080")
+
+	resp := e.GET("/artists/autocomplete/{s}", "best").
+		WithHeader("X-User-Token", tc.token).
+		Expect().Status(200)
+
+	obj := resp.JSON().Object()
+	obj.Keys().ContainsOnly("status", "data")
+	obj.ValueEqual("status", "success")
+	obj.Value("data").Object().Keys().ContainsOnly("artists")
+	artists := obj.Value("data").Object().Value("artists").Array()
+	artists.Length().Equal(1)
+	artists.Element(0).Object().ValueEqual("id", a1.ID)
+
+	resp = e.GET("/artists/autocomplete/{s}", "other").
+		WithHeader("X-User-Token", tc.token).
+		Expect().Status(200)
+
+	obj = resp.JSON().Object()
+	obj.Keys().ContainsOnly("status", "data")
+	obj.ValueEqual("status", "success")
+	obj.Value("data").Object().Keys().ContainsOnly("artists")
+	artists = obj.Value("data").Object().Value("artists").Array()
+	artists.Length().Equal(1)
+	artists.Element(0).Object().ValueEqual("id", a2.ID)
+
+	resp = e.GET("/artists/autocomplete/{s}", "test").
+		WithHeader("X-User-Token", tc.token).
+		Expect().Status(200)
+
+	obj = resp.JSON().Object()
+	obj.Keys().ContainsOnly("status", "data")
+	obj.ValueEqual("status", "success")
+	obj.Value("data").Object().Keys().ContainsOnly("artists")
+	artists = obj.Value("data").Object().Value("artists").Array()
+	artists.Length().Equal(2)
+}
+
+func TestAutocompleteArtistTags(t *testing.T) {
+	tc, err := cleanDBWithLogin()
+	require.Nil(t, err)
+	a, err := getDefaultAPIWithDB(tc.db)
+	require.Nil(t, err)
+	err = givePrivileges(a, tc.user.ID, "get_artist")
+	require.Nil(t, err)
+
+	a1 := db.Artist{
+		Name: "test1",
+		Bio:  sql.NullString{String: "Some bio"},
+		Aliases: []db.ArtistAlias{{
+			Alias:   "best1",
+			Added:   time.Date(2010, 03, 02, 12, 34, 0, 0, time.FixedZone("", 0)),
+			AddedBy: db.User{ID: 1}}},
+		Tags:    []string{"tag1", "special.tag"},
+		Added:   time.Date(2010, 03, 02, 12, 34, 0, 0, time.FixedZone("", 0)),
+		AddedBy: db.User{ID: 1},
+	}
+
+	a2 := db.Artist{
+		Name: "some other artist",
+		Bio:  sql.NullString{String: "Some bio"},
+		Aliases: []db.ArtistAlias{{
+			Alias:   "test2",
+			Added:   time.Date(2010, 03, 02, 12, 34, 0, 0, time.FixedZone("", 0)),
+			AddedBy: db.User{ID: 1}}},
+		Tags:    []string{"special.tag", "non.special.tag"},
+		Added:   time.Date(2010, 03, 02, 12, 34, 0, 0, time.FixedZone("", 0)),
+		AddedBy: db.User{ID: 1},
+	}
+
+	err = tc.db.InsertArtist(&a1)
+	require.Nil(t, err)
+	err = tc.db.InsertArtist(&a2)
+	require.Nil(t, err)
+
+	e := httpexpect.New(t, "http://localhost:8080")
+
+	resp := e.GET("/artists/autocomplete_tags/{s}", "non").
+		WithHeader("X-User-Token", tc.token).
+		Expect().Status(200)
+
+	obj := resp.JSON().Object()
+	obj.Keys().ContainsOnly("status", "data")
+	obj.ValueEqual("status", "success")
+	obj.Value("data").Object().Keys().ContainsOnly("tags")
+	tags := obj.Value("data").Object().Value("tags").Array()
+	tags.Length().Equal(1)
+	tags.Element(0).Equal("non.special.tag")
+
+	resp = e.GET("/artists/autocomplete_tags/{s}", "special").
+		WithHeader("X-User-Token", tc.token).
+		Expect().Status(200)
+
+	obj = resp.JSON().Object()
+	obj.Keys().ContainsOnly("status", "data")
+	obj.ValueEqual("status", "success")
+	obj.Value("data").Object().Keys().ContainsOnly("tags")
+	tags = obj.Value("data").Object().Value("tags").Array()
+	tags.Length().Equal(2)
+	tags.ContainsOnly("non.special.tag", "special.tag")
+
+}

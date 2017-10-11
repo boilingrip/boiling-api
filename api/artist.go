@@ -87,6 +87,14 @@ type ArtistResponse struct {
 	Artist Artist `json:"artist"`
 }
 
+type ArtistsResponse struct {
+	Artists []Artist `json:"artists"`
+}
+
+type TagsResponse struct {
+	Tags []string `json:"tags"`
+}
+
 func (a *API) getArtist(ctx *context) {
 	id, err := ctx.Params().GetInt("id")
 	if err != nil {
@@ -111,4 +119,41 @@ func (a *API) getArtist(ctx *context) {
 	}
 
 	ctx.Success(ArtistResponse{Artist: a.artistFromDBArtist(artist)})
+}
+
+func (a *API) autocompleteArtist(ctx *context) {
+	s := ctx.Params().Get("s")
+	if len(s) == 0 {
+		ctx.Fail(errors.New("missing fragment"), iris.StatusBadRequest)
+		return
+	}
+
+	artists, err := a.db.AutocompleteArtists(s)
+	if err != nil {
+		ctx.Fail(userError(err, "not found"), iris.StatusNotFound)
+		return
+	}
+
+	var toReturn []Artist
+	for _, artist := range artists {
+		toReturn = append(toReturn, a.artistFromDBArtist(&artist))
+	}
+
+	ctx.Success(ArtistsResponse{Artists: toReturn})
+}
+
+func (a *API) autocompleteArtistTags(ctx *context) {
+	s := ctx.Params().Get("s")
+	if len(s) == 0 {
+		ctx.Fail(errors.New("missing fragment"), iris.StatusBadRequest)
+		return
+	}
+
+	tags, err := a.db.AutocompleteArtistTags(s)
+	if err != nil {
+		ctx.Fail(userError(err, "not found"), iris.StatusNotFound)
+		return
+	}
+
+	ctx.Success(TagsResponse{Tags: tags})
 }

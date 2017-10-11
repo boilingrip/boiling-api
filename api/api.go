@@ -142,6 +142,8 @@ func (a *API) makeRoutes() {
 	withAuth.Get("/users/{id}", handler(a.getUser))
 
 	withAuth.Get("/artists/{id}", handler(a.withPrivilege("get_artist")), handler(a.getArtist))
+	withAuth.Get("/artists/autocomplete/{s}", handler(a.withPrivilege("get_artist")), handler(a.autocompleteArtist))
+	withAuth.Get("/artists/autocomplete_tags/{s}", handler(a.withPrivilege("get_artist")), handler(a.autocompleteArtistTags))
 
 	withAuth.Get("/release_groups/{id}", handler(a.withPrivilege("get_release_group")), handler(a.getReleaseGroup))
 }
