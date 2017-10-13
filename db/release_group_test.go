@@ -173,3 +173,71 @@ func TestInsertGetReleaseGroup(t *testing.T) {
 	require.Equal(t, g.Type, got.Type)
 	require.Equal(t, g.Tags, got.Tags)
 }
+
+func TestSearchReleaseGroups(t *testing.T) {
+	db, err := cleanDB()
+	require.Nil(t, err)
+
+	a := Artist{
+		Name:    "deadmau5",
+		Added:   time.Date(2001, 1, 1, 0, 0, 0, 0, time.FixedZone("", 0)),
+		AddedBy: User{ID: 1},
+	}
+
+	err = db.InsertArtist(&a)
+	require.Nil(t, err)
+
+	g1 := ReleaseGroup{
+		Name: "Some old title",
+		Artists: []RoledArtist{
+			{
+				Role:   0,
+				Artist: Artist{ID: a.ID},
+			},
+		},
+		ReleaseDate: time.Date(2010, 12, 13, 13, 14, 15, 0, time.FixedZone("", 0)),
+		Added:       time.Date(2012, 2, 2, 2, 2, 2, 0, time.FixedZone("", 0)),
+		AddedBy:     User{ID: 1},
+		Type:        0,
+		Tags:        []string{"electronic", "canadian"},
+	}
+
+	g2 := ReleaseGroup{
+		Name: "Some new title",
+		Artists: []RoledArtist{
+			{
+				Role:   0,
+				Artist: Artist{ID: a.ID},
+			},
+		},
+		ReleaseDate: time.Date(2011, 12, 13, 13, 14, 15, 0, time.FixedZone("", 0)),
+		Added:       time.Date(2013, 2, 2, 2, 2, 2, 0, time.FixedZone("", 0)),
+		AddedBy:     User{ID: 1},
+		Type:        0,
+		Tags:        []string{"electronic", "canadian", "house"},
+	}
+
+	err = db.InsertReleaseGroup(&g1)
+	require.Nil(t, err)
+
+	err = db.InsertReleaseGroup(&g2)
+	require.Nil(t, err)
+
+	groups, err := db.SearchReleaseGroups(NewQuery(
+		Eq(ReleaseGroupReleaseDateSelector(), g2.ReleaseDate),
+	), 0, 100)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(groups))
+	require.Equal(t, g2.ID, groups[0].ID)
+
+	q := NewQuery(Or(
+		Eq(ReleaseGroupReleaseDateSelector(), g2.ReleaseDate),
+		Neq(ReleaseGroupReleaseDateSelector(), g2.ReleaseDate),
+	)) // This is effectively WHERE TRUE
+	q.SetSorter(SortDescending(ReleaseGroupReleaseDateSelector()))
+	groups, err = db.SearchReleaseGroups(q, 0, 100)
+	require.Nil(t, err)
+	require.Equal(t, 2, len(groups))
+	require.Equal(t, g2.ID, groups[0].ID)
+	require.Equal(t, g1.ID, groups[1].ID)
+}

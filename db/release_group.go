@@ -310,3 +310,81 @@ func (db *DB) PopulateReleases(group *ReleaseGroup) error {
 
 	return nil
 }
+
+type simpleColumnSelector struct {
+	col string
+}
+
+func (s simpleColumnSelector) column() string {
+	return s.col
+}
+
+func ReleaseGroupAddedSelector() ColumnSelector {
+	return simpleColumnSelector{
+		col: "added",
+	}
+}
+
+func ReleaseGroupReleaseDateSelector() ColumnSelector {
+	return simpleColumnSelector{
+		col: "release_date",
+	}
+}
+
+func ReleaseGroupTypeSelector() ColumnSelector {
+	return simpleColumnSelector{
+		col: "type",
+	}
+}
+
+func (db *DB) SearchReleaseGroups(q *Query, offset, limit int) ([]ReleaseGroup, error) {
+	if q == nil {
+		return nil, errors.New("missing q")
+	}
+	if limit < 1 {
+		return nil, errors.New("invalid limit")
+	}
+	if offset < 0 {
+		return nil, errors.New("invalid offset")
+	}
+
+	query, params := q.Build()
+
+	qq := fmt.Sprintf("SELECT rg.id,rg.name,rg.release_date,rg.added,u.id,u.username,rg.type FROM release_groups rg, users u WHERE rg.added_by = u.id AND %s OFFSET $%d LIMIT $%d;", query, len(params)+1, len(params)+2)
+
+	rows, err := db.db.Query(qq, append(params, offset, limit)...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var groups []ReleaseGroup
+	for rows.Next() {
+		var group ReleaseGroup
+		err := rows.Scan(
+			&group.ID,
+			&group.Name,
+			&group.ReleaseDate,
+			&group.Added,
+			&group.AddedBy.ID,
+			&group.AddedBy.Username,
+			&group.Type)
+		if err != nil {
+			return nil, err
+		}
+
+		err = db.populateReleaseGroupTags(&group)
+		if err != nil {
+			return nil, err
+		}
+
+		err = db.populateReleaseGroupArtists(&group)
+		if err != nil {
+			return nil, err
+		}
+
+		groups = append(groups, group)
+	}
+
+	return groups, nil
+}

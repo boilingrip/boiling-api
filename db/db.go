@@ -73,6 +73,7 @@ type BoilingDB interface {
 	GetReleaseGroup(id int) (*ReleaseGroup, error)
 	InsertReleaseGroup(group *ReleaseGroup) error
 	PopulateReleases(group *ReleaseGroup) error
+	SearchReleaseGroups(q *Query, offset, limit int) ([]ReleaseGroup, error)
 }
 
 func New(database, user, pass string) (BoilingDB, error) {
