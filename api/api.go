@@ -146,6 +146,14 @@ func (a *API) makeRoutes() {
 	withAuth.Get("/artists/autocomplete_tags/{s}", handler(a.withPrivilege("get_artist")), handler(a.autocompleteArtistTags))
 
 	withAuth.Get("/release_groups/{id}", handler(a.withPrivilege("get_release_group")), handler(a.getReleaseGroup))
+
+	withAuth.Get("/formats", handler(a.getFormats))
+	withAuth.Get("/leech_types", handler(a.getLeechTypes))
+	withAuth.Get("/media", handler(a.getMedia))
+	withAuth.Get("/release_group_types", handler(a.getReleaseGroupTypes))
+	withAuth.Get("/release_properties", handler(a.getReleaseProperties))
+	withAuth.Get("/release_roles", handler(a.getReleaseRoles))
+	withAuth.Get("/privileges", handler(a.getPrivileges))
 }
 
 func (a *API) Run(runner iris.Runner) error {
