@@ -31,7 +31,7 @@ type ReleaseGroup struct {
 	Artists     []RoledArtist `json:"artists"`
 	ReleaseDate time.Time     `json:"release_date"`
 	Added       time.Time     `json:"added"`
-	AddedBy     User          `json:"added_by"`
+	AddedBy     BaseUser      `json:"added_by"`
 	Type        string        `json:"type"`               // Album/EP
 	Releases    []Release     `json:"releases,omitempty"` // individual releases
 	Tags        []string      `json:"tags,omitempty"`
@@ -43,7 +43,7 @@ func (a *API) releaseGroupFromDBReleaseGroup(dbRG *db.ReleaseGroup) ReleaseGroup
 		Name:        dbRG.Name,
 		ReleaseDate: dbRG.ReleaseDate,
 		Added:       dbRG.Added,
-		AddedBy:     userFromDBUser(dbRG.AddedBy),
+		AddedBy:     baseUserFromDBUser(dbRG.AddedBy),
 		Tags:        dbRG.Tags,
 		Type:        a.c.releaseGroupTypes.MustReverseLookUp(dbRG.Type),
 	}
