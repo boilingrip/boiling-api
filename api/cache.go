@@ -56,6 +56,13 @@ func (s *SyncedLookupTable) HasReverse(i int) bool {
 	return has
 }
 
+func (s *SyncedLookupTable) Keys() []string {
+	s.RLock()
+	keys := s.l.Keys()
+	s.RUnlock()
+	return keys
+}
+
 type Cache struct {
 	formats           *SyncedLookupTable
 	leechTypes        *SyncedLookupTable

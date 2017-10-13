@@ -3,11 +3,13 @@ package api
 import (
 	"errors"
 	"fmt"
+	"sort"
 )
 
 type LookupTable struct {
 	forward map[string]int
 	reverse map[int]string
+	keys    []string
 }
 
 var ErrKeyNotFound = errors.New("key not found")
@@ -24,9 +26,16 @@ func BuildLookupTable(m map[int]string) LookupTable {
 		}
 
 		t.forward[v] = k
+		t.keys = append(t.keys, v)
 	}
 
+	sort.Strings(t.keys)
+
 	return t
+}
+
+func (l LookupTable) Keys() []string {
+	return l.keys
 }
 
 func (l LookupTable) LookUp(s string) (int, error) {
