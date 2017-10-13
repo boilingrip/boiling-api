@@ -85,7 +85,7 @@ If every tracker grabs some alpha release and starts months of development on to
 
 ## API Documentation
 
-See `API.md`.
+Refer to [the API documentation draft](API.md).
 
 ## Development
 
