@@ -1,0 +1,9 @@
+boiling:
+  database: "boiling"
+  database_user: "boiling"
+  database_password: "boiling"
+
+  listen_addr: ":8234"
+
+  create_sql: "$GOPATH/src/github.com/boilingrip/boiling-api/db/create.sql"
+  reset_hour: 4
