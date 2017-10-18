@@ -157,7 +157,12 @@ func (a *API) makeRoutes() {
 }
 
 func (a *API) Run(runner iris.Runner) error {
-	return a.app.Run(runner, iris.WithoutServerError(iris.ErrServerClosed))
+	log.Infoln("starting to listen...")
+	return a.app.Run(runner,
+		iris.WithoutServerError(iris.ErrServerClosed),
+		iris.WithoutInterruptHandler,
+		iris.WithoutVersionChecker,
+		iris.WithoutBanner)
 }
 
 func (a *API) Stop() error {
