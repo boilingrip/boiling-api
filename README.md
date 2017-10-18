@@ -74,8 +74,8 @@ If every tracker grabs some alpha release and starts months of development on to
 - Are you running a private tracker??
     > No, I just write this software. Don't send me DMCA notices.
 - Can I test it?
-    > A public instance will be running at `api.boiling.rip:8234` at some point, resets every 24 hours or so.
-        You'll need an API key. 
+    > A public instance will be running at `https://api.boiling.rip:8443` at some point, resets every 24 hours or so.
+        You might need an API key in the future.
         Or just run your own.
 - Is this project affiliated with chihaya?
     > No. I think they're doing a great job, which is why I chose their tracker and their contributing guidelines.
