@@ -32,6 +32,8 @@ type Config struct {
 	DatabasePassword string `yaml:"database_password"`
 
 	ListenAddress string `yaml:"listen_addr"`
+	KeyFile       string `yaml:"key_file"`
+	CertFile      string `yaml:"cert_file"`
 
 	CreateSQL string `yaml:"create_sql"`
 	ResetHour int    `yaml:"reset_hour"`
@@ -151,39 +153,6 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		t := time.NewTicker(5 * time.Second)
-		for {
-			select {
-			case <-t.C:
-				if _, err := os.Stat("update_available"); !os.IsNotExist(err) {
-					log.Infoln("update_available exists, attempting upgrade")
-
-					err = os.Remove("update_available")
-					if err != nil {
-						log.Errorln("unable to delete update_available: ", err)
-					}
-
-					err = a.Stop()
-					if err != nil {
-						log.Warnln("unable to shut down cleanly: ", err)
-					}
-
-					err = d.Close()
-					if err != nil {
-						log.Warnln("unable to close DB cleanly: ", err)
-					}
-
-					os.Exit(0)
-				}
-			case <-closing:
-				return
-			}
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
 		for {
 			now := time.Now()
 			now = now.Add(24 * time.Hour)
@@ -217,7 +186,10 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err = a.Run(iris.Addr(cfg.Boiling.ListenAddress))
+		keyFile := os.ExpandEnv(cfg.Boiling.KeyFile)
+		certFile := os.ExpandEnv(cfg.Boiling.CertFile)
+		log.Infof("Going to listen on %s with certificate %s and key %s", cfg.Boiling.ListenAddress, certFile, keyFile)
+		err = a.Run(iris.TLS(cfg.Boiling.ListenAddress, certFile, keyFile))
 		close(shutdown)
 		if err != nil {
 			close(closing)

@@ -3,7 +3,9 @@ boiling:
   database_user: "boiling"
   database_password: "boiling"
 
-  listen_addr: ":8234"
+  listen_addr: ":8443"
+  key_file: "$HOME/api.boiling.rip.key"
+  cert_file: "$HOME/api.boiling.rip.crt"
 
   create_sql: "$GOPATH/src/github.com/boilingrip/boiling-api/db/create.sql"
   reset_hour: 4
