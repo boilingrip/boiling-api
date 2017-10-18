@@ -15,6 +15,8 @@ type DB struct {
 }
 
 type BoilingDB interface {
+	Close() error
+
 	SignUpUser(username, password, email string) error
 	LoginAndGetUser(username, password string) (*User, error)
 	GetUser(id int) (*User, error)
@@ -89,4 +91,8 @@ func compileMarkdown(input []byte) []byte {
 	unsafe := blackfriday.MarkdownCommon(input)
 	html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
 	return html
+}
+
+func (db *DB) Close() error {
+	return db.db.Close()
 }
