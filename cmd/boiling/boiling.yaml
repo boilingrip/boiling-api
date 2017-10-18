@@ -1,0 +1,6 @@
+boiling:
+  database: "boiling"
+  database_user: "boiling"
+  database_password: "boiling"
+
+  listen_addr: ":8080"
