@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kataras/iris"
+	"github.com/kataras/iris/v12"
 )
 
 type dType int

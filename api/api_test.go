@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kataras/iris"
+	"github.com/kataras/iris/v12"
 
 	"github.com/boilingrip/boiling-api/db"
 )

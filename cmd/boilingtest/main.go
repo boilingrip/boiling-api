@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kataras/iris"
+	"github.com/kataras/iris/v12"
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"

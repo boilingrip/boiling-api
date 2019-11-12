@@ -3,7 +3,7 @@ package api
 import (
 	"time"
 
-	"github.com/kataras/iris"
+	"github.com/kataras/iris/v12"
 )
 
 type LoginResponse struct {
