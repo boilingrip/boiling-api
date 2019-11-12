@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/kataras/iris"
+	"github.com/kataras/iris/v12"
 )
 
 func (a *API) withLogin(ctx *context) {

@@ -88,7 +88,7 @@ func New(database, user, pass string) (BoilingDB, error) {
 }
 
 func compileMarkdown(input []byte) []byte {
-	unsafe := blackfriday.MarkdownCommon(input)
+	unsafe := blackfriday.Run(input)
 	html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
 	return html
 }

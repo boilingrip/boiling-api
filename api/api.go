@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kataras/iris"
+	"github.com/kataras/iris/v12"
 	"github.com/microcosm-cc/bluemonday"
 	log "github.com/sirupsen/logrus"
 
@@ -161,7 +161,6 @@ func (a *API) Run(runner iris.Runner) error {
 	return a.app.Run(runner,
 		iris.WithoutServerError(iris.ErrServerClosed),
 		iris.WithoutInterruptHandler,
-		iris.WithoutVersionChecker,
 		iris.WithoutBanner)
 }
 
